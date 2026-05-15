@@ -1,0 +1,64 @@
+[
+  {
+    "_id": "2f364c00-cc5d-44e2-8e19-21ca92ebf282",
+    "type": "system",
+    "action": "db.seeded",
+    "message": "Database seeded with UAE driving schools on first launch",
+    "meta": {},
+    "createdAt": "2026-05-15T09:37:47.731Z",
+    "updatedAt": "2026-05-15T09:37:47.731Z"
+  },
+  {
+    "_id": "1a11f334-37ac-4e9f-99b5-ea24126337b9",
+    "type": "lead",
+    "action": "lead.submitted",
+    "message": "New lead: jaya — Forklift",
+    "meta": {
+      "leadId": "a22edc55-a50f-4937-82cc-44ffa32a90f8",
+      "email": "tttheunseen@gmail.com",
+      "licenseType": "Forklift"
+    },
+    "createdAt": "2026-05-15T09:38:16.635Z",
+    "updatedAt": "2026-05-15T09:38:16.635Z"
+  },
+  {
+    "_id": "fad302ed-dd45-4bce-97c6-af18e72dfe26",
+    "type": "admin",
+    "action": "auth.failed",
+    "message": "Failed login attempt from ::1",
+    "meta": {
+      "ip": "::1"
+    },
+    "createdAt": "2026-05-15T09:39:34.543Z",
+    "updatedAt": "2026-05-15T09:39:34.543Z"
+  },
+  {
+    "_id": "dc3074a9-b7a1-4fc0-8592-1ff4414188b0",
+    "type": "admin",
+    "action": "auth.login",
+    "message": "Admin logged in from ::1",
+    "meta": {
+      "ip": "::1"
+    },
+    "createdAt": "2026-05-15T09:39:41.864Z",
+    "updatedAt": "2026-05-15T09:39:41.864Z"
+  },
+  {
+    "_id": "5f47e46e-218a-4bdf-8c5e-bfa7c27f512d",
+    "type": "admin",
+    "action": "content.updated",
+    "message": "Content \"testimonials\" updated",
+    "meta": {},
+    "createdAt": "2026-05-15T09:42:37.866Z",
+    "updatedAt": "2026-05-15T09:42:37.866Z"
+  },
+  {
+    "_id": "9dcd5502-6a75-49bb-b789-bf68362d6ffe",
+    "type": "admin",
+    "action": "content.updated",
+    "message": "Content \"testimonials\" updated",
+    "meta": {},
+    "createdAt": "2026-05-15T09:43:33.364Z",
+    "updatedAt": "2026-05-15T09:43:33.364Z"
+  }
+]

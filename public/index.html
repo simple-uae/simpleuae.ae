@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple UAE — Find Your Perfect Driving School</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/*
+ * ============================================================
+ *  BROWN SHADE OUTLINE — SimpleUAE Component Enhancement
+ *  Drop this <link> AFTER your main stylesheet.
+ *  It adds a warm brown/amber shadow coming from behind each
+ *  component, giving them a lifted, outlined look matching
+ *  the deepseek reference file.
+ * ============================================================
+ */
+
+/* ── Core shadow tokens ── */
+:root {
+  --bs-brown-soft:   rgba(74, 55, 40, 0.14);   /* subtle lift         */
+  --bs-brown-mid:    rgba(74, 55, 40, 0.24);   /* standard outline    */
+  --bs-brown-strong: rgba(74, 55, 40, 0.38);   /* hovered / focused   */
+  --bs-amber-glow:   rgba(184, 132, 74, 0.18); /* warm amber halo     */
+  --bs-amber-strong: rgba(184, 132, 74, 0.32); /* hovered amber halo  */
+  --bs-offset: 4px;     /* how far the shadow sits behind */
+  --bs-blur:   20px;    /* softness of the shadow         */
+  --bs-spread: 0px;     /* no spread — keeps it outline-like */
+}
+
+/* ================================================================
+   1. SELECTOR / HERO CARD  (.selector-card)
+   ================================================================ */
+.selector-card {
+  box-shadow:
+    0 var(--bs-offset) var(--bs-blur) var(--bs-spread) var(--bs-brown-mid),
+    0 1px  6px  0 var(--bs-brown-soft),
+    0 0    0    1px rgba(196, 168, 130, 0.30);   /* hair-line border */
+}
+.selector-card:hover {
+  box-shadow:
+    0 8px 32px 0 var(--bs-brown-strong),
+    0 2px 8px  0 var(--bs-brown-mid),
+    0 0   0    1px rgba(184, 132, 74, 0.45);
+}
+
+/* ================================================================
+   2. SCHOOL CARDS  (.school-card)
+   ================================================================ */
+.school-card {
+  box-shadow:
+    0 var(--bs-offset) 18px var(--bs-spread) var(--bs-brown-soft),
+    0 0 0 1px rgba(196, 168, 130, 0.16);
+}
+.school-card:hover {
+  box-shadow:
+    0 8px 28px 0 var(--bs-brown-mid),
+    0 0   0   1px rgba(184, 132, 74, 0.35);
+}
+
+/* ================================================================
+   3. LICENSE CARDS  (.lic-card)
+   ================================================================ */
+.lic-card {
+  box-shadow:
+    0 var(--bs-offset) 16px var(--bs-spread) var(--bs-brown-soft),
+    0 0 0 1.5px rgba(196, 168, 130, 0.18);
+}
+.lic-card:hover {
+  box-shadow:
+    0 10px 36px 0 var(--bs-brown-mid),
+    0 0    0   1.5px rgba(184, 132, 74, 0.42);
+}
+
+/* ================================================================
+   4. STEP ICONS  (.step-icon)
+   ================================================================ */
+.step-icon {
+  box-shadow:
+    0 4px 16px 0 var(--bs-brown-soft),
+    0 0 0 1px rgba(196, 168, 130, 0.20);
+}
+.step-card:hover .step-icon {
+  box-shadow:
+    0 10px 30px 0 var(--bs-brown-mid),
+    0 0    0   1px rgba(184, 132, 74, 0.38);
+}
+
+/* ================================================================
+   5. TESTIMONIAL CARDS  (.testi-card)
+   ================================================================ */
+.testi-card {
+  box-shadow:
+    0 4px 24px 0 var(--bs-brown-soft),
+    0 0 0 1px rgba(196, 168, 130, 0.14);
+}
+.testi-card:hover {
+  box-shadow:
+    0 10px 36px 0 var(--bs-brown-mid),
+    0 0    0   1px rgba(184, 132, 74, 0.30);
+}
+
+/* ================================================================
+   6. MODAL CONTENT  (.modal-content)
+   ================================================================ */
+.modal-content {
+  box-shadow:
+    0 20px 60px 0 var(--bs-brown-strong),
+    0 0    0   1px rgba(196, 168, 130, 0.22);
+}
+
+/* ================================================================
+   7. NAVIGATION BAR  (nav)
+   ================================================================ */
+nav {
+  box-shadow:
+    0 4px 20px 0 var(--bs-brown-soft),
+    0 1px 0   0 rgba(196, 168, 130, 0.24);
+}
+
+/* ================================================================
+   8. BUTTONS — warm / ghost / submit / search
+   ================================================================ */
+.btn-warm {
+  box-shadow:
+    0 4px 20px 0 rgba(184, 132, 74, 0.30),
+    0 0   0   1px rgba(155, 110, 56, 0.20);
+}
+.btn-warm:hover {
+  box-shadow:
+    0 8px 30px 0 rgba(184, 132, 74, 0.44),
+    0 0   0   1px rgba(155, 110, 56, 0.35);
+}
+
+.btn-ghost {
+  box-shadow:
+    0 2px 10px 0 var(--bs-brown-soft),
+    0 0   0   1px rgba(196, 168, 130, 0.30);
+}
+.btn-ghost:hover {
+  box-shadow:
+    0 4px 18px 0 var(--bs-brown-mid),
+    0 0   0   1px rgba(184, 132, 74, 0.45);
+}
+
+.submit-btn,
+.search-btn {
+  box-shadow:
+    0 4px 20px 0 rgba(196, 103, 58, 0.25),
+    0 0   0   1px rgba(184, 132, 74, 0.20);
+}
+.submit-btn:hover,
+.search-btn:hover {
+  box-shadow:
+    0 8px 28px 0 rgba(196, 103, 58, 0.38),
+    0 0   0   1px rgba(184, 132, 74, 0.40);
+}
+
+/* ================================================================
+   9. LICENSE SELECTOR BUTTONS  (.license-btn active/hover)
+   ================================================================ */
+.license-btn:hover,
+.license-btn.active {
+  box-shadow:
+    0 4px 20px 0 rgba(184, 132, 74, 0.18),
+    0 0   0   1.5px rgba(184, 132, 74, 0.50);
+}
+
+/* ================================================================
+  10. ADMIN GATE BOX  (.admin-gate-box)
+   ================================================================ */
+.admin-gate-box {
+  box-shadow:
+    0 0  80px 0 rgba(184, 132, 74, 0.14),
+    0 20px 60px 0 var(--bs-brown-strong),
+    0 0   0   1px rgba(184, 132, 74, 0.20);
+}
+
+/* ================================================================
+  11. ADMIN STAT CARDS  (.admin-stat)
+   ================================================================ */
+.admin-stat {
+  box-shadow:
+    0 4px 16px 0 rgba(0, 0, 0, 0.25),
+    0 0   0   1px rgba(184, 132, 74, 0.12);
+}
+.admin-stat:hover {
+  box-shadow:
+    0 6px 24px 0 rgba(0, 0, 0, 0.35),
+    0 0   0   1px rgba(184, 132, 74, 0.32);
+}
+
+/* ================================================================
+  12. CTA STRIP  (#cta-strip) — inner shadow around edges
+   ================================================================ */
+#cta-strip {
+  box-shadow:
+    inset 0 0 80px 0 rgba(74, 55, 40, 0.22),
+    0 -4px 24px 0 rgba(74, 55, 40, 0.18);
+}
+
+/* ================================================================
+  13. STAT BAR items  (.stat-item)
+   ================================================================ */
+.stat-item {
+  box-shadow: inset 0 0 30px 0 rgba(74, 55, 40, 0.08);
+}
+.stat-item:hover {
+  box-shadow: inset 0 0 40px 0 rgba(184, 132, 74, 0.10);
+}
+
+/* ================================================================
+  14. MARQUEE BAR  (.marquee-wrap) — top/bottom edge glow
+   ================================================================ */
+.marquee-wrap {
+  box-shadow:
+    0 -2px 12px 0 rgba(184, 132, 74, 0.22),
+    0  2px 12px 0 rgba(184, 132, 74, 0.22);
+}
+
+/* ================================================================
+  15. HERO BADGE  (.hero-badge)
+   ================================================================ */
+.hero-badge {
+  box-shadow:
+    0 2px 10px 0 var(--bs-brown-soft),
+    0 0   0   1px rgba(196, 168, 130, 0.30);
+}
+
+/* ================================================================
+  16. SCHOOL LOGO AVATAR  (.school-logo)
+   ================================================================ */
+.school-logo {
+  box-shadow:
+    0 4px 14px 0 rgba(184, 132, 74, 0.30),
+    0 0   0   1px rgba(184, 132, 74, 0.25);
+}
+
+/* ===== BASE VARIABLES & RESET — COMPLETE ORIGINAL ===== */
+:root {
+  --cream:     #FAF7F2;
+  --cream2:    #F5F0E8;
+  --cream3:    #EDE5D8;
+  --sand:      #D9C9AD;
+  --warm:      #C4A882;
+  --amber:     #B8844A;
+  --amber2:    #9B6E38;
+  --rust:      #C4673A;
+  --charcoal:  #2C2620;
+  --brown:     #4A3728;
+  --text:      #3D2E22;
+  --text2:     #7A6655;
+  --text3:     #A8927E;
+  --white:     #FEFCF9;
+  --shadow:    rgba(74,55,40,0.10);
+  --shadow2:   rgba(74,55,40,0.18);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--cream);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  overflow-x: hidden;
+  cursor: none;
+}
+* { cursor: none !important; }
+
+/* Loader — ORIGINAL */
+#loader {
+  position: fixed; inset: 0; z-index: 999999;
+  background: #1E110A;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden;
+}
+#loader::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(184,132,74,0.13) 0%, transparent 65%),
+              radial-gradient(ellipse 40% 40% at 20% 80%, rgba(196,103,58,0.10) 0%, transparent 60%),
+              radial-gradient(ellipse 30% 30% at 80% 20%, rgba(155,110,56,0.08) 0%, transparent 55%);
+  animation: bgBreath 5s ease-in-out infinite;
+}
+@keyframes bgBreath { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.75; transform:scale(1.04); } }
+#loaderCanvas { position: absolute; inset: 0; width:100%; height:100%; pointer-events:none; }
+.ldr-ripple { position: absolute; border-radius:50%; border:1px solid rgba(184,132,74,0.0); animation: rippleOut var(--rd,3s) var(--rdelay,0s) ease-out infinite; }
+@keyframes rippleOut { 0%{ width:80px; height:80px; opacity:0.8; border-color:rgba(184,132,74,0.5); } 100%{ width:700px; height:700px; opacity:0; border-color:rgba(184,132,74,0.0); } }
+.ldr-orbit { position: absolute; border-radius:50%; border:1px solid transparent; pointer-events:none; }
+.ldr-orbit-1 { width:200px; height:200px; border-color:rgba(184,132,74,0.22); animation: orbitSpin 8s linear infinite; }
+.ldr-orbit-2 { width:310px; height:310px; border-color:rgba(184,132,74,0.12); border-style:dashed; animation: orbitSpin 15s linear infinite reverse; }
+.ldr-orbit-3 { width:440px; height:440px; border-color:rgba(196,103,58,0.07); animation: orbitSpin 25s linear infinite; }
+@keyframes orbitSpin { to { transform:rotate(360deg); } }
+.ldr-corner { position: absolute; width:40px; height:40px; pointer-events:none; opacity:0; animation:fadeUpIn 0.6s 1.8s ease both; }
+.ldr-corner::before, .ldr-corner::after { content:''; position:absolute; background:rgba(184,132,74,0.35); }
+.ldr-corner::before { width:100%; height:1px; top:0; left:0; }
+.ldr-corner::after { width:1px; height:100%; top:0; left:0; }
+.ldr-corner.tr { top:32px; right:32px; transform:rotate(90deg); }
+.ldr-corner.br { bottom:32px; right:32px; transform:rotate(180deg); }
+.ldr-corner.bl { bottom:32px; left:32px; transform:rotate(270deg); }
+.ldr-corner.tl { top:32px; left:32px; }
+.ldr-center { position:relative; z-index:10; display:flex; flex-direction:column; align-items:center; gap:0; }
+.ldr-badge { display:flex; align-items:center; gap:8px; font-size:11px; letter-spacing:3.5px; text-transform:uppercase; color:rgba(217,201,173,0.55); margin-bottom:18px; opacity:0; animation:fadeUpIn 0.7s 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+.ldr-logo { font-family:'Playfair Display',serif; font-size:clamp(58px,10vw,100px); font-weight:700; line-height:1; letter-spacing:-2px; display:flex; align-items:baseline; opacity:0; animation:logoReveal 1s 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+@keyframes logoReveal { from{ opacity:0; transform:translateY(28px) scale(0.94); filter:blur(8px); } to{ opacity:1; transform:translateY(0) scale(1); filter:blur(0); } }
+.ldr-logo .part-simple { color:var(--cream); }
+.ldr-logo .part-uae { color:var(--amber); position:relative; padding-left:6px; }
+.ldr-logo .part-uae::before { content:''; position:absolute; top:0; left:-10%; width:50%; height:100%; background:linear-gradient(110deg,transparent 0%,rgba(255,255,255,0.28) 50%,transparent 100%); transform:skewX(-15deg); animation:shineSweep 1.4s 1.7s ease forwards; pointer-events:none; }
+@keyframes shineSweep { from{ left:-30%; opacity:0; } 20%{ opacity:1; } to{ left:120%; opacity:0; } }
+.ldr-logo .part-dot { width:10px; height:10px; border-radius:50%; background:var(--amber); box-shadow:0 0 16px 4px rgba(184,132,74,0.7); margin-left:4px; margin-bottom:10px; flex-shrink:0; animation:dotPulse 1.5s 1.6s ease-in-out infinite; }
+@keyframes dotPulse { 0%,100%{ box-shadow:0 0 14px 3px rgba(184,132,74,0.6); transform:scale(1); } 50%{ box-shadow:0 0 24px 7px rgba(184,132,74,0.9); transform:scale(1.25); } }
+.ldr-tagline { font-size:12px; letter-spacing:5px; text-transform:uppercase; color:rgba(217,201,173,0.5); margin-top:16px; opacity:0; animation:taglineIn 0.8s 1.3s ease both; }
+@keyframes taglineIn { from{ opacity:0; letter-spacing:9px; transform:translateY(6px); } to{ opacity:1; letter-spacing:5px; transform:translateY(0); } }
+.ldr-line { height:1px; width:0; background:linear-gradient(90deg,transparent,var(--amber),var(--rust),transparent); margin-top:22px; animation:lineGrow 1s 1.5s cubic-bezier(0.4,0,0.2,1) forwards; box-shadow:0 0 10px rgba(184,132,74,0.4); }
+@keyframes lineGrow { to { width:240px; } }
+.ldr-words { position:absolute; bottom:80px; display:flex; flex-direction:column; align-items:center; gap:12px; z-index:10; }
+.ldr-word { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:rgba(184,132,74,0.45); opacity:0; transform:translateY(6px); transition:all 0.4s ease; }
+.ldr-word.shown { opacity:1; transform:translateY(0); }
+.ldr-progress-wrap { position:absolute; bottom:48px; width:min(260px,60vw); z-index:10; }
+.ldr-progress-track { width:100%; height:1.5px; background:rgba(184,132,74,0.15); border-radius:2px; overflow:hidden; }
+.ldr-progress-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--amber2),var(--amber),var(--rust)); border-radius:2px; box-shadow:0 0 10px rgba(184,132,74,0.8); transition:width 0.08s linear; }
+.ldr-pct { text-align:right; margin-top:7px; font-size:10px; letter-spacing:2px; color:rgba(184,132,74,0.4); font-family:'Playfair Display',serif; }
+#loader.exit { animation:loaderExit 1.1s cubic-bezier(0.76,0,0.24,1) forwards; }
+@keyframes loaderExit { 0%{ clip-path:inset(0 0 0 0); opacity:1; } 100%{ clip-path:inset(0 0 100% 0); opacity:0.5; } }
+@keyframes fadeUpIn { from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+#site-wrapper { opacity:0; transition:opacity 0.5s 0.2s ease; }
+#site-wrapper.revealed { opacity:1; }
+
+/* ===== CUSTOM CURSOR — ORIGINAL ===== */
+#cursor-outer { position:fixed; width:36px; height:36px; border:1.5px solid var(--amber); border-radius:50%; pointer-events:none; z-index:2147483647; transform:translate(-50%,-50%); transition:width 0.25s ease, height 0.25s ease, border-color 0.25s ease, opacity 0.4s ease; opacity:0; left:-100px; top:-100px; will-change:left,top; }
+#cursor-inner { position:fixed; width:7px; height:7px; background:var(--amber); border-radius:50%; pointer-events:none; z-index:2147483647; transform:translate(-50%,-50%); opacity:0; left:-100px; top:-100px; transition:opacity 0.4s ease; will-change:left,top; }
+
+/* ===== NAVIGATION — ORIGINAL ===== */
+nav { position:fixed; top:0; left:0; right:0; z-index:500; padding:20px 60px; display:flex; align-items:center; justify-content:space-between; background:rgba(250,247,242,0.88); backdrop-filter:blur(16px); border-bottom:1px solid rgba(196,168,130,0.2); transition:padding 0.4s ease, background 0.4s; }
+nav.scrolled { padding:14px 60px; }
+.nav-logo { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--charcoal); letter-spacing:-0.5px; display:flex; align-items:center; gap:8px; }
+.nav-logo .dot { width:8px; height:8px; border-radius:50%; background:var(--amber); }
+.nav-logo span { color:var(--amber); }
+.nav-links { display:flex; gap:36px; list-style:none; }
+.nav-links a { font-size:14px; font-weight:400; letter-spacing:0.3px; color:var(--text2); text-decoration:none; position:relative; transition:color 0.3s; }
+.nav-links a::after { content:''; position:absolute; bottom:-3px; left:0; width:0; height:1px; background:var(--amber); transition:width 0.3s ease; }
+.nav-links a:hover { color:var(--amber); }
+.nav-links a:hover::after { width:100%; }
+.nav-cta { font-size:13px; font-weight:500; letter-spacing:0.8px; padding:11px 28px; background:var(--charcoal); color:var(--cream); border:none; cursor:none; border-radius:2px; transition:background 0.3s, transform 0.2s; text-transform:uppercase; }
+.nav-cta:hover { background:var(--amber2); transform:translateY(-1px); }
+.nav-toggle { display:none; flex-direction:column; gap:6px; background:none; border:none; cursor:pointer; padding:8px; }
+.nav-toggle span { width:24px; height:2px; background:var(--charcoal); border-radius:2px; transition:all 0.3s; }
+.nav-toggle.active span:nth-child(1) { transform:rotate(45deg) translate(8px,8px); }
+.nav-toggle.active span:nth-child(2) { opacity:0; }
+.nav-toggle.active span:nth-child(3) { transform:rotate(-45deg) translate(7px,-7px); }
+
+/* ===== HERO, SECTIONS — FULL ORIGINAL ===== */
+section { position:relative; }
+#hero { min-height:100vh; background:var(--cream); display:grid; grid-template-columns:1fr 1fr; align-items:center; padding:120px 60px 80px; gap:60px; overflow:hidden; position:relative; }
+#hero::before { content:''; position:absolute; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events:none; z-index:0; opacity:0.4; }
+.hero-circle { position:absolute; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle,var(--cream3) 0%,transparent 70%); top:-100px; right:-100px; animation:floatCircle 8s ease-in-out infinite; pointer-events:none; }
+.hero-circle2 { position:absolute; width:300px; height:300px; border-radius:50%; border:1px solid rgba(196,168,130,0.25); bottom:80px; left:-80px; animation:floatCircle 10s ease-in-out infinite reverse; pointer-events:none; }
+@keyframes floatCircle { 0%,100%{ transform:translateY(0) scale(1); } 50%{ transform:translateY(-20px) scale(1.02); } }
+.hero-left { position:relative; z-index:2; }
+.hero-badge { display:inline-flex; align-items:center; gap:8px; background:var(--cream2); border:1px solid var(--sand); padding:8px 16px; border-radius:100px; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--amber2); font-weight:500; margin-bottom:28px; animation:fadeSlideUp 0.8s 0.2s both; }
+.hero-title { font-family:'Playfair Display',serif; font-size:clamp(42px,5.5vw,72px); line-height:1.08; font-weight:700; color:var(--charcoal); letter-spacing:-1px; animation:fadeSlideUp 0.9s 0.35s both; }
+.hero-title em { font-style:italic; color:var(--amber); }
+.hero-title .line2 { display:block; }
+.hero-sub { margin-top:22px; font-size:17px; line-height:1.75; color:var(--text2); font-weight:300; max-width:460px; animation:fadeSlideUp 0.9s 0.5s both; }
+.hero-actions { display:flex; gap:14px; margin-top:40px; align-items:center; animation:fadeSlideUp 0.9s 0.65s both; }
+.btn-warm { padding:16px 36px; background:var(--amber); color:var(--white); font-size:14px; font-weight:500; letter-spacing:0.5px; border:none; cursor:none; border-radius:2px; transition:all 0.3s; box-shadow:0 4px 20px rgba(184,132,74,0.3); }
+.btn-warm:hover { background:var(--amber2); transform:translateY(-2px); box-shadow:0 8px 30px rgba(184,132,74,0.4); }
+.btn-ghost { padding:16px 30px; background:transparent; color:var(--text2); font-size:14px; font-weight:400; letter-spacing:0.5px; border:1px solid var(--sand); cursor:none; border-radius:2px; transition:all 0.3s; display:flex; align-items:center; gap:8px; }
+.btn-ghost:hover { border-color:var(--amber); color:var(--amber); }
+.btn-ghost .arrow { transition:transform 0.3s; }
+.btn-ghost:hover .arrow { transform:translateX(4px); }
+.hero-trust { margin-top:48px; display:flex; align-items:center; gap:20px; animation:fadeSlideUp 0.9s 0.8s both; }
+.trust-num { font-family:'Playfair Display',serif; font-size:28px; font-weight:700; color:var(--charcoal); }
+.trust-label { font-size:12px; color:var(--text3); letter-spacing:0.5px; }
+.trust-sep { width:1px; height:36px; background:var(--sand); }
+.hero-right { position:relative; z-index:2; animation:fadeSlideRight 1s 0.4s both; }
+.selector-card { background:var(--white); border-radius:20px; padding:36px; box-shadow:0 20px 60px var(--shadow2), 0 2px 8px var(--shadow); position:relative; overflow:hidden; }
+.selector-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--amber),var(--rust),var(--amber)); background-size:200%; animation:shimmerBar 3s linear infinite; }
+@keyframes shimmerBar { to { background-position:200% 0; } }
+.card-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); font-weight:500; margin-bottom:6px; }
+.card-title { font-family:'Playfair Display',serif; font-size:22px; color:var(--charcoal); margin-bottom:24px; }
+.license-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:24px; }
+.license-btn { display:flex; flex-direction:column; align-items:center; gap:6px; padding:16px 8px; background:var(--cream); border:1.5px solid transparent; border-radius:12px; cursor:none; transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1); font-size:11px; color:var(--text2); letter-spacing:0.3px; font-weight:500; }
+.license-btn .lic-icon { font-size:26px; transition:transform 0.3s; }
+.license-btn:hover, .license-btn.active { background:var(--white); border-color:var(--amber); box-shadow:0 4px 20px rgba(184,132,74,0.15); transform:translateY(-2px); color:var(--amber2); }
+.license-btn:hover .lic-icon { transform:scale(1.15) rotate(-5deg); }
+.emirate-select { width:100%; padding:14px 16px; background:var(--cream); border:1.5px solid var(--sand); border-radius:10px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23B8844A' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 16px center; margin-bottom:14px; transition:border-color 0.3s; }
+.emirate-select:focus { outline:none; border-color:var(--amber); }
+.search-btn { width:100%; padding:16px; background:var(--charcoal); color:var(--cream); border:none; border-radius:10px; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; letter-spacing:0.8px; transition:all 0.3s; text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:10px; }
+.search-btn:hover { background:var(--amber); transform:translateY(-1px); }
+.card-footer { margin-top:18px; display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text3); }
+.card-footer .check { color:var(--amber); }
+@keyframes fadeSlideUp { from{ opacity:0; transform:translateY(24px); } to{ opacity:1; transform:translateY(0); } }
+@keyframes fadeSlideRight { from{ opacity:0; transform:translateX(30px); } to{ opacity:1; transform:translateX(0); } }
+
+#how { background:var(--cream2); padding:100px 60px; overflow:hidden; }
+.section-eyebrow { font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--amber); font-weight:500; margin-bottom:10px; display:flex; align-items:center; gap:12px; }
+.section-eyebrow::before { content:''; display:inline-block; width:24px; height:1px; background:var(--amber); }
+.section-heading { font-family:'Playfair Display',serif; font-size:clamp(30px,4vw,48px); font-weight:700; color:var(--charcoal); letter-spacing:-0.5px; line-height:1.15; }
+.section-heading em { font-style:italic; color:var(--amber); }
+.steps-row { display:grid; grid-template-columns:repeat(3,1fr); gap:40px; margin-top:60px; }
+.step-card { position:relative; opacity:0; transform:translateY(30px); transition:opacity 0.7s ease, transform 0.7s ease; }
+.step-card.visible { opacity:1; transform:translateY(0); }
+.step-num { font-family:'Playfair Display',serif; font-size:72px; font-weight:700; color:var(--cream3); line-height:1; margin-bottom:-16px; position:relative; z-index:0; user-select:none; }
+.step-icon { width:52px; height:52px; border-radius:14px; background:var(--white); display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:18px; box-shadow:0 4px 16px var(--shadow); position:relative; z-index:1; transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s; }
+.step-card:hover .step-icon { transform:translateY(-4px) scale(1.05); box-shadow:0 10px 30px var(--shadow2); }
+.step-title { font-family:'Playfair Display',serif; font-size:20px; color:var(--charcoal); margin-bottom:10px; }
+.step-desc { font-size:14px; line-height:1.75; color:var(--text2); }
+.step-connector { position:absolute; top:80px; right:-20px; font-size:20px; color:var(--sand); z-index:2; animation:connectorPulse 2s ease-in-out infinite; }
+@keyframes connectorPulse { 0%,100%{ opacity:0.4; } 50%{ opacity:1; } }
+
+#licenses { background:var(--cream); padding:100px 60px; }
+.license-showcase { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-top:50px; }
+.lic-card { background:var(--white); border-radius:16px; padding:28px 20px; border:1.5px solid transparent; cursor:pointer; position:relative; overflow:hidden; transition:all 0.35s cubic-bezier(0.34,1.3,0.64,1); opacity:0; transform:scale(0.95); }
+.lic-card.visible { opacity:1; transform:scale(1); }
+.lic-card:hover { border-color:rgba(184,132,74,0.4); transform:translateY(-6px) scale(1.01); box-shadow:0 20px 50px rgba(74,55,40,0.12); }
+.lic-card .big-icon { font-size:40px; margin-bottom:14px; display:block; }
+.lic-card h3 { font-family:'Playfair Display',serif; font-size:17px; color:var(--charcoal); margin-bottom:6px; }
+.lic-card p { font-size:13px; color:var(--text2); line-height:1.6; }
+.lic-tag { display:inline-block; margin-top:12px; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; background:var(--cream2); color:var(--amber2); border-radius:4px; font-weight:500; }
+
+#schools { background:var(--charcoal); padding:100px 60px; overflow:hidden; }
+#schools .section-eyebrow { color:var(--sand); }
+#schools .section-eyebrow::before { background:var(--sand); }
+#schools .section-heading { color:var(--cream); }
+.schools-strip { display:flex; gap:24px; margin-top:50px; overflow-x:auto; padding-bottom:10px; scrollbar-width:none; }
+.schools-strip::-webkit-scrollbar { display:none; }
+.school-card { min-width:280px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:28px 24px; flex-shrink:0; opacity:0; transform:translateX(30px); transition:opacity 0.6s ease, transform 0.6s ease, background 0.3s; cursor:pointer; }
+.school-card.visible { opacity:1; transform:translateX(0); }
+.school-card:hover { background:rgba(255,255,255,0.07); }
+.school-logo { width:48px; height:48px; border-radius:12px; background:var(--amber); display:flex; align-items:center; justify-content:center; font-size:20px; margin-bottom:16px; font-family:'Playfair Display',serif; color:var(--white); font-weight:700; }
+.school-name { font-family:'Playfair Display',serif; font-size:18px; color:var(--cream); margin-bottom:6px; }
+.school-location { font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:14px; }
+.school-rating { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--sand); }
+.stars { color:#E8B96A; letter-spacing:1px; font-size:12px; }
+.school-price { margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08); font-size:13px; color:rgba(255,255,255,0.5); }
+.school-price span { font-family:'Playfair Display',serif; font-size:22px; color:var(--sand); font-weight:600; }
+.school-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:14px; }
+.school-tag { font-size:10px; padding:4px 10px; border-radius:100px; background:rgba(196,168,130,0.15); color:var(--sand); letter-spacing:0.5px; }
+
+#cta-strip { background:linear-gradient(135deg,var(--amber) 0%,var(--rust) 100%); padding:80px 60px; display:flex; align-items:center; justify-content:space-between; gap:40px; overflow:hidden; position:relative; }
+#cta-strip::before { content:''; position:absolute; top:-100px; right:-100px; width:400px; height:400px; border-radius:50%; background:rgba(255,255,255,0.06); }
+#cta-strip::after { content:''; position:absolute; bottom:-80px; left:20%; width:300px; height:300px; border-radius:50%; background:rgba(255,255,255,0.04); }
+.cta-text { position:relative; z-index:1; }
+.cta-text h2 { font-family:'Playfair Display',serif; font-size:clamp(28px,3.5vw,44px); color:var(--white); font-weight:700; line-height:1.2; }
+.cta-text p { font-size:16px; color:rgba(255,255,255,0.75); margin-top:10px; }
+.btn-white { position:relative; z-index:1; padding:18px 44px; background:var(--white); color:var(--amber2); font-size:14px; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; border:none; cursor:pointer; border-radius:2px; transition:all 0.3s; white-space:nowrap; box-shadow:0 8px 30px rgba(0,0,0,0.2); flex-shrink:0; }
+.btn-white:hover { transform:translateY(-2px); box-shadow:0 14px 40px rgba(0,0,0,0.3); }
+
+footer { background:#1E1610; padding:60px 60px 36px; color:rgba(255,255,255,0.5); }
+.footer-top { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:40px; border-bottom:1px solid rgba(255,255,255,0.06); flex-wrap:wrap; gap:40px; }
+.footer-logo { font-family:'Playfair Display',serif; font-size:24px; color:var(--cream); font-weight:700; }
+.footer-logo span { color:var(--amber); }
+.footer-tagline { font-size:13px; color:rgba(255,255,255,0.3); margin-top:6px; max-width:200px; }
+.footer-links h4 { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--sand); margin-bottom:16px; }
+.footer-links ul { list-style:none; display:flex; flex-direction:column; gap:10px; }
+.footer-links a { font-size:13px; color:rgba(255,255,255,0.4); text-decoration:none; transition:color 0.3s; }
+.footer-links a:hover { color:var(--sand); }
+.footer-bottom { display:flex; justify-content:space-between; align-items:center; padding-top:28px; font-size:12px; flex-wrap:wrap; gap:10px; }
+.marquee-wrap { background:var(--amber); overflow:hidden; padding:14px 0; display:flex; }
+.marquee-track { display:flex; gap:0; animation:marqueeScroll 22s linear infinite; white-space:nowrap; }
+.marquee-item { font-size:12px; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:var(--white); padding:0 30px; opacity:0.85; display:flex; align-items:center; gap:10px; }
+.marquee-item::after { content:'·'; opacity:0.5; }
+@keyframes marqueeScroll { to { transform:translateX(-50%); } }
+.stats-bar { display:flex; gap:0; background:var(--charcoal); overflow:hidden; }
+.stat-item { flex:1; padding:40px 30px; border-right:1px solid rgba(255,255,255,0.06); text-align:center; transition:background 0.3s; cursor:default; }
+.stat-item:last-child { border-right:none; }
+.stat-item:hover { background:rgba(255,255,255,0.03); }
+.stat-number { font-family:'Playfair Display',serif; font-size:40px; font-weight:700; color:var(--sand); line-height:1; }
+.stat-desc { font-size:12px; color:rgba(255,255,255,0.35); margin-top:6px; letter-spacing:0.5px; }
+
+#testimonials { background:var(--cream2); padding:100px 60px; }
+.testimonials-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:50px; }
+.testi-card { background:var(--white); border-radius:16px; padding:30px; box-shadow:0 4px 24px var(--shadow); opacity:0; transform:translateY(20px); transition:opacity 0.7s ease, transform 0.7s ease; }
+.testi-card.visible { opacity:1; transform:translateY(0); }
+.testi-quote { font-family:'Playfair Display',serif; font-size:15px; line-height:1.75; color:var(--text); font-style:italic; margin-bottom:20px; }
+.testi-quote::before { content:'"'; font-size:50px; color:var(--sand); line-height:0; vertical-align:-20px; margin-right:4px; }
+.testi-author { display:flex; align-items:center; gap:12px; }
+.testi-avatar { width:40px; height:40px; border-radius:50%; background:var(--cream3); display:flex; align-items:center; justify-content:center; font-size:16px; }
+.testi-name { font-size:14px; font-weight:500; color:var(--charcoal); }
+.testi-role { font-size:12px; color:var(--text3); }
+
+.float-shape { position:absolute; border-radius:50%; pointer-events:none; animation:gentleFloat var(--d,6s) ease-in-out infinite; }
+@keyframes gentleFloat { 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-15px) rotate(5deg); } }
+.reveal-up { opacity:0; transform:translateY(40px); transition:opacity 0.8s ease, transform 0.8s ease; }
+.reveal-up.visible { opacity:1; transform:translateY(0); }
+.reveal-fade { opacity:0; transition:opacity 0.9s ease; }
+.reveal-fade.visible { opacity:1; }
+
+/* ===== COMPARISON MODAL — ORIGINAL (FULL VEHICLE-SPECIFIC QUESTIONS) ===== */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 9999990;
+  background: rgba(44,38,32,0.92);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+  padding: 20px;
+}
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+.modal-content {
+  background: var(--white);
+  border-radius: 16px;
+  padding: clamp(24px, 6vw, 48px);
+  max-width: 600px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(74,55,40,0.25);
+  animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes slideUp { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; padding-bottom:16px; border-bottom:1px solid var(--cream3); }
+.modal-header h2 { font-family:'Playfair Display',serif; font-size:clamp(24px,5vw,32px); font-weight:600; color:var(--text); }
+.modal-close { background:none; border:none; font-size:28px; cursor:pointer; color:var(--text3); transition:color 0.3s; padding:8px; }
+.modal-close:hover { color:var(--rust); }
+.form-section { margin-bottom:28px; }
+.form-section h3 { font-family:'Playfair Display',serif; font-size:18px; font-weight:600; color:var(--text); margin-bottom:16px; }
+.form-group { margin-bottom:18px; }
+.form-group label { display:block; font-size:14px; font-weight:500; color:var(--text); margin-bottom:8px; }
+.form-group input, .form-group select, .form-group textarea { width:100%; padding:clamp(10px,2vw,14px); border:1px solid var(--cream3); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text); transition:all 0.3s; box-sizing:border-box; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--amber); box-shadow:0 0 0 3px rgba(184,132,74,0.1); }
+.radio-group, .checkbox-group { display:flex; flex-direction:column; gap:12px; }
+.radio-item, .checkbox-item { display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; cursor:pointer; transition:background 0.2s; }
+.radio-item:hover, .checkbox-item:hover { background:var(--cream2); }
+.radio-item input, .checkbox-item input { cursor:pointer; width:18px; height:18px; accent-color:var(--amber); }
+.submit-btn { width:100%; padding:clamp(12px,2.5vw,16px); background:linear-gradient(135deg,var(--amber) 0%,var(--rust) 100%); color:var(--white); border:none; border-radius:8px; font-size:clamp(14px,2vw,16px); font-weight:600; cursor:pointer; transition:all 0.3s; margin-top:12px; }
+.submit-btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(196,103,58,0.3); }
+
+/* ADMIN PANEL — WARM THEME (ADDED, NOT REPLACING ANYTHING) */
+#admin-trigger { position:fixed; bottom:0; right:0; width:40px; height:40px; z-index:99998; background:transparent; border:none; outline:none; pointer-events:auto; cursor:pointer; background:rgba(184,132,74,0.1); border-radius:50% 0 0 0; transition:0.2s; }
+#admin-trigger:hover { background:rgba(184,132,74,0.25); }
+#admin-gate { position:fixed; inset:0; z-index:999999; background:rgba(44,38,32,0.97); backdrop-filter:blur(20px); display:none; align-items:center; justify-content:center; flex-direction:column; }
+#admin-gate.show { display:flex; }
+.admin-gate-box { background:#12100D; border:1px solid rgba(184,132,74,0.2); border-radius:16px; padding:48px 44px; width:380px; box-shadow:0 0 80px rgba(184,132,74,0.12); position:relative; overflow:hidden; }
+.admin-gate-box::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--amber),var(--rust),transparent); }
+.admin-gate-logo { font-family:'Playfair Display',serif; font-size:22px; color:var(--cream); text-align:center; margin-bottom:6px; }
+.admin-gate-logo span { color:var(--amber); }
+.admin-gate-sub { font-size:11px; letter-spacing:3px; text-transform:uppercase; color:rgba(184,132,74,0.5); text-align:center; margin-bottom:36px; }
+.admin-gate-field { width:100%; padding:14px 16px; background:rgba(255,255,255,0.04); border:1px solid rgba(184,132,74,0.2); border-radius:8px; color:var(--cream); font-family:'DM Sans',sans-serif; font-size:15px; letter-spacing:3px; outline:none; transition:border-color 0.3s; text-align:center; }
+.admin-gate-field:focus { border-color:rgba(184,132,74,0.6); }
+.admin-gate-btn { width:100%; padding:14px; background:linear-gradient(135deg,var(--amber),var(--rust)); color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; margin-top:14px; transition:opacity 0.2s, transform 0.2s; }
+.admin-gate-btn:hover { opacity:0.9; transform:translateY(-1px); }
+.admin-gate-close { position:absolute; top:16px; right:16px; background:none; border:none; color:rgba(255,255,255,0.3); font-size:20px; cursor:pointer; transition:color 0.3s; }
+.admin-gate-close:hover { color:rgba(255,255,255,0.7); }
+#admin-panel { position:fixed; inset:0; z-index:999998; display:none; background:#0D0B09; font-family:'DM Sans',sans-serif; overflow:hidden; }
+#admin-panel.show { display:flex; }
+.admin-sidebar { width:240px; flex-shrink:0; background:#100E0B; border-right:1px solid rgba(184,132,74,0.1); display:flex; flex-direction:column; overflow-y:auto; }
+.admin-sidebar-header { padding:28px 20px 20px; border-bottom:1px solid rgba(184,132,74,0.08); }
+.admin-brand { font-family:'Playfair Display',serif; font-size:18px; color:var(--cream); font-weight:700; }
+.admin-brand span { color:var(--amber); }
+.admin-brand-sub { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:rgba(184,132,74,0.4); margin-top:3px; }
+.admin-nav-section { padding:18px 12px 8px; }
+.admin-nav-label { font-size:9px; letter-spacing:2.5px; text-transform:uppercase; color:rgba(184,132,74,0.35); padding:0 8px; margin-bottom:6px; }
+.admin-nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer; color:rgba(255,255,255,0.45); font-size:13px; transition:all 0.2s; border:none; background:none; width:100%; text-align:left; }
+.admin-nav-item:hover { background:rgba(184,132,74,0.08); color:rgba(255,255,255,0.75); }
+.admin-nav-item.active { background:rgba(184,132,74,0.14); color:var(--sand); }
+.admin-nav-item .nav-icon { font-size:15px; width:20px; text-align:center; flex-shrink:0; }
+.admin-nav-item .nav-badge { margin-left:auto; background:var(--rust); color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; font-weight:600; }
+.admin-sidebar-footer { margin-top:auto; padding:16px 12px; border-top:1px solid rgba(184,132,74,0.08); }
+.admin-logout { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer; color:rgba(255,100,100,0.5); font-size:13px; transition:all 0.2s; border:none; background:none; width:100%; }
+.admin-logout:hover { background:rgba(255,80,80,0.08); color:rgba(255,100,100,0.9); }
+.admin-main { flex:1; overflow-y:auto; background:#0D0B09; display:flex; flex-direction:column; }
+.admin-topbar { display:flex; align-items:center; justify-content:space-between; padding:20px 28px; border-bottom:1px solid rgba(184,132,74,0.08); position:sticky; top:0; background:#0D0B09; z-index:10; }
+.admin-page-title { font-family:'Playfair Display',serif; font-size:22px; color:var(--cream); font-weight:600; }
+.admin-page-sub { font-size:12px; color:rgba(255,255,255,0.3); margin-top:2px; }
+.admin-topbar-actions { display:flex; align-items:center; gap:12px; }
+.admin-status-dot { width:8px; height:8px; border-radius:50%; background:#4ade80; box-shadow:0 0 8px rgba(74,222,128,0.7); animation:statusPulse 2s ease-in-out infinite; }
+@keyframes statusPulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+.admin-save-btn { background:var(--amber); color:#000; border:none; padding:8px 20px; border-radius:6px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.admin-save-btn:hover { opacity:0.85; transform:translateY(-1px); background:var(--amber2); color:#fff; }
+.admin-content { padding:28px; flex:1; }
+.admin-panel { display:none; animation:fadeIn 0.3s ease; }
+.admin-panel.active { display:block; }
+@keyframes fadeIn { from{ opacity:0; } to{ opacity:1; } }
+.admin-stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+.admin-stat { background:#14120F; border:1px solid rgba(184,132,74,0.12); border-radius:12px; padding:20px; transition:border-color 0.3s; }
+.admin-stat:hover { border-color:rgba(184,132,74,0.3); }
+.admin-stat-label { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:10px; }
+.admin-stat-val { font-family:'Playfair Display',serif; font-size:32px; color:var(--sand); line-height:1; }
+.admin-stat-change { font-size:11px; color:#4ade80; margin-top:6px; }
+.admin-section-title { font-size:13px; letter-spacing:2px; text-transform:uppercase; color:rgba(184,132,74,0.6); margin-bottom:16px; display:flex; align-items:center; gap:12px; }
+.admin-section-title::after { content:''; flex:1; height:1px; background:rgba(184,132,74,0.1); }
+.admin-card { background:#14120F; border:1px solid rgba(184,132,74,0.1); border-radius:12px; padding:22px; margin-bottom:20px; }
+.admin-card-title { font-family:'Playfair Display',serif; font-size:17px; color:var(--cream); margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+.admin-table { width:100%; border-collapse:collapse; font-size:13px; }
+.admin-table th { text-align:left; padding:10px 14px; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:rgba(184,132,74,0.5); border-bottom:1px solid rgba(184,132,74,0.1); }
+.admin-table td { padding:12px 14px; color:rgba(255,255,255,0.7); border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+.admin-table tr:hover td { background:rgba(184,132,74,0.04); }
+.admin-input, .admin-select, .admin-textarea { background:rgba(255,255,255,0.04); border:1px solid rgba(184,132,74,0.2); border-radius:8px; color:var(--cream); font-family:'DM Sans',sans-serif; font-size:13px; padding:10px 14px; outline:none; transition:border-color 0.2s; width:100%; }
+.admin-input:focus, .admin-select:focus, .admin-textarea:focus { border-color:rgba(184,132,74,0.5); }
+.admin-label { font-size:11px; letter-spacing:1px; text-transform:uppercase; color:rgba(184,132,74,0.6); margin-bottom:6px; display:block; }
+.admin-form-row { margin-bottom:16px; }
+.admin-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.admin-btn { padding:8px 16px; border-radius:6px; border:none; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s; letter-spacing:0.5px; }
+.admin-btn-primary { background:var(--amber); color:#fff; }
+.admin-btn-primary:hover { background:var(--amber2); transform:translateY(-1px); }
+.admin-btn-ghost { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.6); }
+.admin-btn-ghost:hover { background:rgba(255,255,255,0.12); }
+.admin-btn-danger { background:rgba(248,113,113,0.15); color:#f87171; }
+.admin-btn-danger:hover { background:rgba(248,113,113,0.25); }
+.admin-btn-success { background:rgba(74,222,128,0.15); color:#4ade80; }
+.admin-btn-success:hover { background:rgba(74,222,128,0.25); }
+.admin-btn-sm { padding:5px 11px; font-size:11px; }
+.admin-toggle { position:relative; width:40px; height:22px; flex-shrink:0; }
+.admin-toggle input { opacity:0; width:0; height:0; }
+.admin-toggle-slider { position:absolute; cursor:pointer; inset:0; background:rgba(255,255,255,0.1); border-radius:22px; transition:0.3s; }
+.admin-toggle-slider::before { content:''; position:absolute; width:16px; height:16px; border-radius:50%; background:#fff; left:3px; top:3px; transition:0.3s; }
+.admin-toggle input:checked + .admin-toggle-slider { background:var(--amber); }
+.admin-toggle input:checked + .admin-toggle-slider::before { transform:translateX(18px); }
+.ai-employees-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
+.ai-employee-card { background:#14120F; border:1px solid rgba(184,132,74,0.12); border-radius:14px; padding:22px; position:relative; overflow:hidden; }
+.ai-employee-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.ai-employee-card.searcher::before { background:linear-gradient(90deg,#3b82f6,#06b6d4); }
+.ai-employee-card.filter::before { background:linear-gradient(90deg,#8b5cf6,#ec4899); }
+.ai-emp-head { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.ai-emp-avatar { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+.ai-emp-avatar.searcher-av { background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); }
+.ai-emp-avatar.filter-av { background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.3); }
+.ai-emp-name { font-family:'Playfair Display',serif; font-size:16px; color:var(--cream); }
+.ai-emp-role { font-size:11px; letter-spacing:1px; text-transform:uppercase; }
+.ai-emp-status { display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:12px; color:rgba(255,255,255,0.4); }
+.ai-emp-status-dot { width:7px; height:7px; border-radius:50%; }
+.ai-emp-status-dot.idle { background:rgba(255,255,255,0.2); }
+.ai-emp-status-dot.running { background:#4ade80; animation:statusPulse 1.5s infinite; }
+.ai-task-log { background:rgba(0,0,0,0.3); border-radius:8px; padding:12px; font-size:11px; color:rgba(255,255,255,0.4); font-family:monospace; line-height:1.8; max-height:100px; overflow-y:auto; margin-bottom:14px; }
+.ai-emp-controls { display:flex; gap:8px; }
+.automation-list { display:flex; flex-direction:column; gap:12px; }
+.automation-rule { background:#14120F; border:1px solid rgba(184,132,74,0.1); border-radius:10px; padding:16px 18px; display:flex; align-items:center; gap:16px; }
+.auto-rule-icon { width:36px; height:36px; border-radius:8px; background:rgba(184,132,74,0.1); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.auto-rule-info { flex:1; }
+.auto-rule-name { font-size:13px; color:var(--cream); font-weight:500; }
+.auto-rule-desc { font-size:11px; color:rgba(255,255,255,0.35); margin-top:3px; }
+.auto-rule-trigger { font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:3px 10px; border-radius:4px; background:rgba(184,132,74,0.1); color:rgba(184,132,74,0.7); margin-top:5px; display:inline-block; }
+.content-tabs { display:flex; gap:4px; margin-bottom:20px; }
+.content-tab { padding:8px 16px; border-radius:6px; border:none; cursor:pointer; font-size:12px; font-weight:500; transition:all 0.2s; background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.4); }
+.content-tab.active { background:rgba(184,132,74,0.2); color:var(--sand); }
+.settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+#admin-toast { position:fixed; bottom:32px; right:32px; z-index:9999999; background:#1a1612; border:1px solid rgba(184,132,74,0.3); border-radius:10px; padding:14px 20px; display:flex; align-items:center; gap:12px; font-size:13px; color:var(--cream); box-shadow:0 8px 40px rgba(0,0,0,0.6); transform:translateY(80px); opacity:0; transition:all 0.4s cubic-bezier(0.16,1,0.3,1); pointer-events:none; }
+#admin-toast.show { transform:translateY(0); opacity:1; }
+@media (max-width:900px){
+  #hero{ grid-template-columns:1fr; padding:100px 28px 60px; }
+  nav{ padding:16px 28px; }
+  .nav-links{ display:none; }
+  .nav-toggle{ display:flex; }
+  .nav-cta{ display:none; }
+  /* Mobile nav dropdown */
+  .nav-mobile-open .nav-links{
+    display:flex; flex-direction:column; gap:0;
+    position:fixed; top:60px; left:0; right:0;
+    background:rgba(250,247,242,0.98); backdrop-filter:blur(20px);
+    border-bottom:1px solid rgba(196,168,130,0.2);
+    padding:12px 0; z-index:499; list-style:none;
+  }
+  .nav-mobile-open .nav-links li a{
+    display:block; padding:14px 28px; font-size:15px;
+    color:var(--text); border-bottom:1px solid rgba(196,168,130,0.08);
+  }
+  .nav-mobile-open .nav-links li:last-child a{ border-bottom:none; }
+  .nav-mobile-open .nav-cta{
+    display:block; margin:12px 28px 16px; text-align:center;
+    padding:13px; border-radius:6px;
+  }
+  .steps-row, .testimonials-grid{ grid-template-columns:1fr; }
+  .stats-bar{ flex-wrap:wrap; }
+  .stat-item{ flex:1 1 50%; border-bottom:1px solid rgba(255,255,255,0.06); }
+  #how, #licenses, #schools, #testimonials, #cta-strip, footer{ padding-left:28px; padding-right:28px; }
+  #cta-strip{ flex-direction:column; text-align:center; }
+  .admin-sidebar{ width:200px; }
+  .admin-stats-row{ grid-template-columns:repeat(2,1fr); }
+  .ai-employees-grid{ grid-template-columns:1fr; }
+  .settings-grid{ grid-template-columns:1fr; }
+  .admin-form-grid{ grid-template-columns:1fr; }
+  .license-grid{ grid-template-columns:repeat(2,1fr); }
+  .hero-actions{ flex-direction:column; gap:12px; }
+  .hero-actions button{ width:100%; }
+  .hero-trust{ gap:16px; }
+}
+@media (max-width:600px){
+  body{ cursor:auto; }
+  #cursor-outer, #cursor-inner{ display:none; }
+  /* Admin panel: sidebar hidden, bottom tab bar instead */
+  .admin-sidebar{ display:none; }
+  .admin-content{ padding:16px; }
+  .admin-mobile-bar{
+    display:flex !important;
+    position:fixed; bottom:0; left:0; right:0; z-index:999997;
+    background:#100E0B; border-top:1px solid rgba(184,132,74,0.15);
+    padding:6px 0 env(safe-area-inset-bottom,6px);
+  }
+  .admin-mobile-tab{
+    flex:1; display:flex; flex-direction:column; align-items:center;
+    gap:3px; padding:8px 4px; background:none; border:none;
+    color:rgba(255,255,255,0.35); font-size:9px; letter-spacing:0.5px;
+    text-transform:uppercase; cursor:pointer; transition:color 0.2s;
+  }
+  .admin-mobile-tab .tab-icon{ font-size:18px; }
+  .admin-mobile-tab.active{ color:var(--amber,#b8844a); }
+  .admin-main{ padding-bottom:70px; }
+  .admin-topbar{ padding:14px 16px; }
+  .admin-stats-row{ grid-template-columns:repeat(2,1fr); gap:10px; }
+  .admin-gate-box{ width:92vw; padding:36px 28px; }
+  /* Hero on small phones */
+  #hero{ padding:88px 20px 48px; }
+  .hero-trust{ flex-direction:column; gap:10px; }
+  .trust-sep{ display:none; }
+  .selector-card{ padding:24px 20px; }
+  .license-grid{ grid-template-columns:repeat(2,1fr); gap:8px; }
+  footer .footer-top{ flex-direction:column; gap:28px; }
+  .admin-form-grid{ grid-template-columns:1fr; }
+  .admin-stats-row{ grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <canvas id="loaderCanvas"></canvas>
+  <div class="ldr-ripple" style="--rd:3.2s; --rdelay:0s;"></div>
+  <div class="ldr-ripple" style="--rd:3.2s; --rdelay:1.1s;"></div>
+  <div class="ldr-ripple" style="--rd:3.2s; --rdelay:2.2s;"></div>
+  <div class="ldr-orbit ldr-orbit-3"></div>
+  <div class="ldr-orbit ldr-orbit-2"></div>
+  <div class="ldr-orbit ldr-orbit-1"></div>
+  <div class="ldr-corner tl"></div>
+  <div class="ldr-corner tr"></div>
+  <div class="ldr-corner bl"></div>
+  <div class="ldr-corner br"></div>
+  <div class="ldr-center">
+    <div class="ldr-badge"><span class="fl">🇦🇪</span> United Arab Emirates</div>
+    <div class="ldr-logo"><span class="part-simple">Simple</span><span class="part-uae">UAE</span><span class="part-dot"></span></div>
+    <div class="ldr-tagline">Find Your Perfect Driving School</div>
+    <div class="ldr-line"></div>
+  </div>
+  <div class="ldr-words"><div class="ldr-word" id="ldrWord"></div></div>
+  <div class="ldr-progress-wrap"><div class="ldr-progress-track"><div class="ldr-progress-fill" id="ldrFill"></div></div><div class="ldr-pct" id="ldrPct">0%</div></div>
+</div>
+
+<div id="cursor-outer"></div>
+<div id="cursor-inner"></div>
+
+<div id="site-wrapper">
+<nav id="mainNav">
+  <div class="nav-logo" id="navLogo"><div class="dot"></div>Simple<span>UAE</span></div>
+  <ul class="nav-menu nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#licenses">License Types</a></li>
+    <li><a href="#schools">Schools</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+  </ul>
+  <button class="nav-cta" onclick="openComparisonModal()">Compare Now</button>
+  <button class="nav-toggle" id="navToggle"><span></span><span></span><span></span></button>
+</nav>
+
+<section id="hero">
+  <div class="hero-circle"></div><div class="hero-circle2"></div>
+  <div class="float-shape" style="width:180px;height:180px;background:rgba(196,168,130,0.12);top:15%;right:5%;--d:7s;"></div>
+  <div class="float-shape" style="width:80px;height:80px;background:rgba(184,132,74,0.08);bottom:25%;left:8%;--d:9s;border-radius:20px;transform:rotate(20deg);"></div>
+  <div class="hero-left">
+    <div class="hero-badge"><span class="flag">🇦🇪</span> UAE's Driving School Finder</div>
+    <h1 class="hero-title">Find the <em>perfect</em><span class="line2">driving school</span> in the UAE</h1>
+    <p class="hero-sub">Compare prices, ratings, and availability across all licensed driving schools in the UAE — for every type of license you need.</p>
+    <div class="hero-actions"><button class="btn-warm" onclick="openComparisonModal()">Start Comparing →</button><button class="btn-ghost">Watch how it works <span class="arrow">→</span></button></div>
+    <div class="hero-trust"><div><div class="trust-num">12+</div><div class="trust-label">Schools Listed</div></div><div class="trust-sep"></div><div><div class="trust-num">7</div><div class="trust-label">Emirates Covered</div></div><div class="trust-sep"></div><div><div class="trust-num">Free</div><div class="trust-label">Always Free</div></div></div>
+  </div>
+  <div class="hero-right">
+    <div class="selector-card">
+      <div class="card-label">Quick Compare</div>
+      <div class="card-title">What license do you need?</div>
+      <div class="license-grid"><div class="license-btn" onclick="openComparisonModal('Car License')"><span class="lic-icon">🚗</span>Car</div><div class="license-btn" onclick="openComparisonModal('Motorcycle')"><span class="lic-icon">🏍️</span>Motorcycle</div><div class="license-btn" onclick="openComparisonModal('Light Truck')"><span class="lic-icon">🚚</span>Light Truck</div><div class="license-btn" onclick="openComparisonModal('Heavy Truck')"><span class="lic-icon">🚛</span>Heavy Truck</div><div class="license-btn" onclick="openComparisonModal('Bus')"><span class="lic-icon">🚌</span>Bus</div><div class="license-btn" onclick="openComparisonModal('Forklift')"><span class="lic-icon">🚜</span>Forklift</div></div>
+      <select class="emirate-select"><option value="">Select your Emirate</option><option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Umm Al Quwain</option></select>
+      <button class="search-btn" onclick="openComparisonModal()"><span class="icon">🔍</span> Find Schools</button>
+      <div class="card-footer"><span class="check">✓</span> 100% free · No registration needed</div>
+    </div>
+  </div>
+</section>
+
+<div class="marquee-wrap"><div class="marquee-track"><span class="marquee-item">Car License</span><span class="marquee-item">Motorcycle License</span><span class="marquee-item">Heavy Truck</span><span class="marquee-item">Light Vehicle</span><span class="marquee-item">Bus License</span><span class="marquee-item">Forklift</span><span class="marquee-item">Pickup Truck</span><span class="marquee-item">Dubai · Abu Dhabi · Sharjah</span></div></div>
+
+<div class="stats-bar"><div class="stat-item reveal-fade"><div class="stat-number">12+</div><div class="stat-desc">Accredited Schools</div></div><div class="stat-item reveal-fade"><div class="stat-number">7</div><div class="stat-desc">Emirates Covered</div></div><div class="stat-item reveal-fade"><div class="stat-number">8</div><div class="stat-desc">License Categories</div></div><div class="stat-item reveal-fade"><div class="stat-number">Free</div><div class="stat-desc">Always Free to Compare</div></div></div>
+
+<section id="how"><div style="max-width:1100px;margin:0 auto;"><div class="section-eyebrow reveal-up">Simple Process</div><h2 class="section-heading reveal-up" style="transition-delay:0.1s">Three steps to your<br><em>driving license</em></h2>
+<div class="steps-row"><div class="step-card"><div class="step-num">01</div><div class="step-icon">🎯</div><h3 class="step-title">Choose Your License</h3><p class="step-desc">Tell us what type of license you're after — from a standard car license to a heavy vehicle or motorcycle license.</p><div class="step-connector">→</div></div>
+<div class="step-card"><div class="step-num">02</div><div class="step-icon">📍</div><h3 class="step-title">Pick Your Emirate</h3><p class="step-desc">Select where you're based — we'll show you all the accredited schools nearest to you.</p><div class="step-connector">→</div></div>
+<div class="step-card"><div class="step-num">03</div><div class="step-icon">⚖️</div><h3 class="step-title">Compare & Decide</h3><p class="step-desc">See prices, ratings, and course durations side by side.</p></div></div></div></section>
+
+<section id="licenses"><div style="max-width:1100px;margin:0 auto;"><div class="section-eyebrow reveal-up">License Categories</div><h2 class="section-heading reveal-up" style="transition-delay:0.1s">Every license type,<br><em>covered</em></h2>
+<p class="reveal-up" style="margin-top:16px;font-size:16px;color:var(--text2);max-width:500px;">From everyday cars to heavy machinery — we compare schools for every RTA-approved driving category.</p>
+<div class="license-showcase"><div class="lic-card" onclick="openComparisonModal('Car License')"><span class="big-icon">🚗</span><h3>Light Motor Vehicle</h3><p>Standard car license — manual and automatic options.</p><span class="lic-tag">Most Popular</span></div>
+<div class="lic-card" onclick="openComparisonModal('Motorcycle')"><span class="big-icon">🏍️</span><h3>Motorcycle</h3><p>Two-wheel license for bikes and scooters.</p><span class="lic-tag">Category A</span></div>
+<div class="lic-card" onclick="openComparisonModal('Light Bus')"><span class="big-icon">🚐</span><h3>Light Bus</h3><p>For minibuses up to 10 seats.</p><span class="lic-tag">Category D1</span></div>
+<div class="lic-card" onclick="openComparisonModal('Bus')"><span class="big-icon">🚌</span><h3>Heavy Bus</h3><p>Full-size passenger bus license.</p><span class="lic-tag">Category D</span></div>
+<div class="lic-card" onclick="openComparisonModal('Light Truck')"><span class="big-icon">🚚</span><h3>Light Truck</h3><p>Pickup trucks and light goods vehicles.</p><span class="lic-tag">Category C1</span></div>
+<div class="lic-card" onclick="openComparisonModal('Heavy Truck')"><span class="big-icon">🚛</span><h3>Heavy Truck</h3><p>Large goods vehicles and HGVs.</p><span class="lic-tag">Category C</span></div>
+<div class="lic-card" onclick="openComparisonModal('Forklift')"><span class="big-icon">🚜</span><h3>Forklift</h3><p>Industrial forklift certification.</p><span class="lic-tag">Category F</span></div>
+<div class="lic-card" onclick="openComparisonModal('Heavy Equipment')"><span class="big-icon">🚧</span><h3>Heavy Equipment</h3><p>Cranes, excavators and heavy machinery.</p><span class="lic-tag">Category HME</span></div></div></div></section>
+
+<section id="schools"><div style="max-width:1200px;margin:0 auto;"><div class="section-eyebrow reveal-up">Top Schools</div><h2 class="section-heading reveal-up" style="transition-delay:0.1s">UAE's most trusted<br><em>driving institutes</em></h2>
+<p class="reveal-up" style="margin-top:16px;font-size:16px;color:rgba(255,255,255,0.45);max-width:500px;">All schools listed are fully licensed and accredited by the Roads & Transport Authority (RTA).</p>
+<div class="schools-strip" id="schoolsStrip"></div></div></section>
+
+<section id="testimonials"><div style="max-width:1100px;margin:0 auto;"><div class="section-eyebrow reveal-up">Real Reviews</div><h2 class="section-heading reveal-up" style="transition-delay:0.1s">What people are <em>saying</em></h2>
+<div class="testimonials-grid" id="testimonialsGrid"></div></div></section>
+
+<section id="cta-strip"><div class="cta-text"><h2>Ready to find your<br>driving school?</h2><p>Free, instant, and covering all 7 emirates.</p></div><button class="btn-white" onclick="openComparisonModal()">Start Comparing — It's Free</button></section>
+
+<footer><div class="footer-top"><div><div class="footer-logo">Simple<span>UAE</span></div><div class="footer-tagline" id="footerTagline">UAE's driving school comparison platform.</div></div>
+<div class="footer-links"><h4>Licenses</h4><ul><li><a href="#">Car License</a></li><li><a href="#">Motorcycle</a></li><li><a href="#">Heavy Truck</a></li><li><a href="#">Bus</a></li></ul></div>
+<div class="footer-links"><h4>Emirates</h4><ul><li><a href="#">Dubai</a></li><li><a href="#">Abu Dhabi</a></li><li><a href="#">Sharjah</a></li><li><a href="#">All Emirates</a></li></ul></div>
+<div class="footer-links"><h4>Company</h4><ul><li><a href="#">About Us</a></li><li><a href="#">For Schools</a></li><li><a href="#">Contact</a></li></ul></div></div>
+<div class="footer-bottom"><span><span class="flag">🇦🇪</span> Simple UAE · UAE Driving School Comparison</span><span id="footerCopyright">© 2025 SimpleUAE. All rights reserved.</span></div>
+<div style="text-align:center;padding:14px 0 4px;border-top:1px solid rgba(255,255,255,0.04);margin-top:10px;"><a href="#" id="sia-powered-link" style="font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(196,168,130,0.35);text-decoration:none;transition:color 0.3s;">Powered by SIA</a></div></footer>
+
+<!-- ADMIN TRIGGER & GATE -->
+<div id="admin-trigger" title="Admin Access (Ctrl+Shift+X)" onclick="adminToken ? (document.getElementById('admin-panel').classList.add('show'), setStatus(true), loadDashboardStats(), loadSchoolsTable(), loadLeadsTable(), loadApprovalsPanel(), loadContentFields(), loadFullLogs()) : openAdminGate()"></div>
+<div id="admin-gate"><div class="admin-gate-box"><button class="admin-gate-close" onclick="closeAdminGate()">✕</button><div class="admin-gate-logo">Simple<span>UAE</span></div><div class="admin-gate-sub">Admin Access</div><input class="admin-gate-field" id="adminKeyInput" type="password" placeholder="Enter admin key" autocomplete="off" onkeydown="if(event.key==='Enter') verifyAdminKey()"/><button class="admin-gate-btn" onclick="verifyAdminKey()">Authenticate →</button><div class="admin-gate-error" id="gateError"></div><div class="admin-gate-attempts" id="gateAttempts"></div></div></div>
+
+<div id="admin-panel">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-header"><div class="admin-brand">Simple<span>UAE</span></div><div class="admin-brand-sub">Control Panel</div></div>
+    <div class="admin-nav-section"><div class="admin-nav-label">Overview</div><button class="admin-nav-item active" onclick="showAdminPanel('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</button></div>
+    <div class="admin-nav-section"><div class="admin-nav-label">Website Data</div><button class="admin-nav-item" onclick="showAdminPanel('schools',this)"><span class="nav-icon">🏫</span> Schools</button><button class="admin-nav-item" onclick="showAdminPanel('content',this)"><span class="nav-icon">✏️</span> Content Editor</button><button class="admin-nav-item" onclick="showAdminPanel('leads',this)"><span class="nav-icon">📋</span> Leads<span class="nav-badge" id="leadsCountBadge">0</span></button></div>
+    <div class="admin-nav-section"><div class="admin-nav-label">AI Employees</div><button class="admin-nav-item" onclick="showAdminPanel('ai',this)"><span class="nav-icon">🤖</span> AI Employees</button><button class="admin-nav-item" onclick="showAdminPanel('automations',this)"><span class="nav-icon">⚡</span> Automations</button><button class="admin-nav-item" onclick="showAdminPanel('approvals',this)"><span class="nav-icon">✅</span> Approvals<span class="nav-badge" id="approvalsBadge">0</span></button></div>
+    <div class="admin-nav-section"><div class="admin-nav-label">System</div><button class="admin-nav-item" onclick="showAdminPanel('settings',this)"><span class="nav-icon">⚙️</span> Settings</button><button class="admin-nav-item" onclick="showAdminPanel('logs',this)"><span class="nav-icon">📜</span> Activity Log</button></div>
+    <div class="admin-sidebar-footer"><button class="admin-logout" onclick="adminLogout()"><span>⬡</span> Sign Out</button></div>
+  </aside>
+  <!-- MOBILE BOTTOM TAB BAR (visible only on <600px) -->
+  <div class="admin-mobile-bar" style="display:none;">
+    <button class="admin-mobile-tab active" onclick="showAdminPanel('dashboard',this)"><span class="tab-icon">📊</span>Dash</button>
+    <button class="admin-mobile-tab" onclick="showAdminPanel('schools',this)"><span class="tab-icon">🏫</span>Schools</button>
+    <button class="admin-mobile-tab" onclick="showAdminPanel('leads',this)"><span class="tab-icon">📋</span>Leads</button>
+    <button class="admin-mobile-tab" onclick="showAdminPanel('content',this)"><span class="tab-icon">✏️</span>Content</button>
+    <button class="admin-mobile-tab" onclick="showAdminPanel('settings',this)"><span class="tab-icon">⚙️</span>More</button>
+  </div>
+  <div class="admin-main">
+    <div class="admin-topbar"><div><div class="admin-page-title" id="adminPageTitle">Dashboard</div><div class="admin-page-sub" id="adminPageSub">Overview of your platform</div></div><div class="admin-topbar-actions"><div class="admin-status-dot"></div><span class="admin-status-text">Live · Backend: offline</span><button class="admin-save-btn" onclick="adminSaveAll()">Save Changes</button></div></div>
+    <div class="admin-content">
+      <div id="admin-panel-dashboard" class="admin-panel active"><div class="admin-stats-row"><div class="admin-stat"><div class="admin-stat-label">Schools Listed</div><div class="admin-stat-val" id="statSchools">0</div></div><div class="admin-stat"><div class="admin-stat-label">Total Leads</div><div class="admin-stat-val" id="statLeads">0</div></div><div class="admin-stat"><div class="admin-stat-label">Page Views</div><div class="admin-stat-val" id="statViews">—</div></div><div class="admin-stat"><div class="admin-stat-label">AI Tasks Run</div><div class="admin-stat-val" id="statAITasks">0</div></div></div>
+        <div class="admin-card"><div class="admin-card-title">⚡ Quick Actions</div><div style="display:flex;gap:12px;flex-wrap:wrap;"><button class="admin-btn admin-btn-primary" onclick="showAdminPanel('schools')">➕ Add School</button><button class="admin-btn admin-btn-ghost" onclick="runAI('scout')">🔍 Run Scout</button><button class="admin-btn admin-btn-ghost" onclick="runAI('filter')">🔬 Run Filter</button><button class="admin-btn admin-btn-ghost" onclick="syncToWebsite()">↑ Push to Website</button></div></div>
+        <div class="admin-card"><div class="admin-card-title">📋 Recent Activity</div><div class="activity-feed" id="activityFeed"><div class="activity-item"><div class="activity-dot"></div><div><div class="activity-text">Admin panel ready.</div><div class="activity-time" id="initTime"></div></div></div></div></div>
+      </div>
+      <div id="admin-panel-schools" class="admin-panel"><div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div></div><button class="admin-btn admin-btn-primary" onclick="openSchoolModal()">+ Add School</button></div><div class="admin-card" style="padding:0;overflow:hidden;"><table class="admin-table" id="schoolsTable"><thead><tr><th>School</th><th>Emirate</th><th>Price</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead><tbody id="schoolsTableBody"></tbody></table></div><div id="schoolModal" style="display:none;position:fixed;inset:0;z-index:9999999;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;"><div class="admin-card" style="width:520px;max-height:90vh;overflow-y:auto;position:relative;"><button onclick="closeSchoolModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;cursor:pointer;">✕</button><div class="admin-card-title">📚 <span id="schoolModalTitle">Add School</span></div><div class="admin-form-grid"><div class="admin-form-row"><label class="admin-label">Name</label><input class="admin-input" id="s-name"></div><div class="admin-form-row"><label class="admin-label">Code</label><input class="admin-input" id="s-code" maxlength="2"></div><div class="admin-form-row"><label class="admin-label">Emirate</label><select class="admin-select" id="s-emirate"><option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Umm Al Quwain</option></select></div><div class="admin-form-row"><label class="admin-label">Location</label><input class="admin-input" id="s-location"></div><div class="admin-form-row"><label class="admin-label">Price</label><input class="admin-input" id="s-price" type="number"></div><div class="admin-form-row"><label class="admin-label">Rating</label><input class="admin-input" id="s-rating" type="number" step="0.1"></div></div><div class="admin-form-row"><label class="admin-label">Reviews</label><input class="admin-input" id="s-reviews"></div><div class="admin-form-row"><label class="admin-label">Tags</label><input class="admin-input" id="s-tags"></div><div class="admin-form-row"><label class="admin-label">Status</label><select class="admin-select" id="s-status"><option>live</option><option>pending</option><option>draft</option></select></div><div style="display:flex;gap:12px;margin-top:20px;"><button class="admin-btn admin-btn-primary" onclick="saveSchool()">Save</button><button class="admin-btn admin-btn-ghost" onclick="closeSchoolModal()">Cancel</button></div></div></div></div>
+      <div id="admin-panel-content" class="admin-panel"><div class="content-tabs"><button class="content-tab active" onclick="switchContentTab('hero',this)">Hero</button><button class="content-tab" onclick="switchContentTab('stats',this)">Stats</button><button class="content-tab" onclick="switchContentTab('testimonials',this)">Testimonials</button><button class="content-tab" onclick="switchContentTab('footer',this)">Footer</button></div>
+      <div id="ctab-hero"><div class="admin-card"><div class="admin-card-title">🦸 Hero Section</div><div class="admin-form-row"><label class="admin-label">Hero Line 1</label><input class="admin-input" id="heroL1" value="Find the perfect"></div><div class="admin-form-row"><label class="admin-label">Hero Line 2</label><input class="admin-input" id="heroL2" value="driving school"></div><div class="admin-form-row"><label class="admin-label">Hero Line 3</label><input class="admin-input" id="heroL3" value="in the UAE"></div><div class="admin-form-row"><label class="admin-label">Hero Subtitle</label><textarea class="admin-textarea" id="heroSub" rows="3">Compare prices, ratings, and availability across all licensed driving schools in the UAE — for every type of license you need.</textarea></div><div class="admin-form-row"><label class="admin-label">CTA Button Text</label><input class="admin-input" id="heroCta" value="Start Comparing →"></div><button class="admin-btn admin-btn-primary" onclick="saveContent('hero')">Save Hero</button></div></div>
+      <div id="ctab-stats" style="display:none;"><div class="admin-card"><div class="admin-card-title">📊 Trust Stats</div><div class="admin-form-grid"><div class="admin-form-row"><label class="admin-label">Stat 1 Number</label><input class="admin-input" id="stat1Num" value="12+"></div><div class="admin-form-row"><label class="admin-label">Stat 1 Label</label><input class="admin-input" id="stat1Label" value="Approved Schools"></div><div class="admin-form-row"><label class="admin-label">Stat 2 Number</label><input class="admin-input" id="stat2Num" value="5"></div><div class="admin-form-row"><label class="admin-label">Stat 2 Label</label><input class="admin-input" id="stat2Label" value="License Types"></div><div class="admin-form-row"><label class="admin-label">Stat 3 Number</label><input class="admin-input" id="stat3Num" value="7"></div><div class="admin-form-row"><label class="admin-label">Stat 3 Label</label><input class="admin-input" id="stat3Label" value="Emirates Covered"></div><div class="admin-form-row"><label class="admin-label">Stat 4 Number</label><input class="admin-input" id="stat4Num" value="Free"></div><div class="admin-form-row"><label class="admin-label">Stat 4 Label</label><input class="admin-input" id="stat4Label" value="Comparison Service"></div></div><button class="admin-btn admin-btn-primary" onclick="saveContent('stats')">Save Stats</button></div></div>
+      <div id="ctab-testimonials" style="display:none;"><div class="admin-card"><div class="admin-card-title">💬 Testimonials</div><div id="testiList"></div><button class="admin-btn admin-btn-ghost" onclick="addTestimonial()" style="width:100%;margin-top:4px;">+ Add Testimonial</button><button class="admin-btn admin-btn-primary" onclick="saveContent('testimonials')" style="margin-top:10px;">Save All</button></div></div>
+      <div id="ctab-footer" style="display:none;"><div class="admin-card"><div class="admin-card-title">🦶 Footer</div><div class="admin-form-row"><label class="admin-label">Tagline</label><input class="admin-input" id="footerTaglineInput" value="UAE's driving school comparison platform."></div><div class="admin-form-row"><label class="admin-label">Copyright</label><input class="admin-input" id="footerCopyrightInput" value="© 2025 SimpleUAE. All rights reserved."></div><button class="admin-btn admin-btn-primary" onclick="saveContent('footer')">Save Footer</button></div></div></div>
+      <div id="admin-panel-leads" class="admin-panel"><div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div></div><button class="admin-btn admin-btn-ghost" onclick="exportLeads()">⬇ Export CSV</button></div><div class="admin-card" style="padding:0;overflow:hidden;"><table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>License</th><th>Emirates</th><th>Date</th><th>Actions</th></tr></thead><tbody id="leadsTableBody"></tbody></table></div></div>
+      <div id="admin-panel-ai" class="admin-panel"><div class="ai-employees-grid"><div class="ai-employee-card searcher"><div class="ai-emp-head"><div class="ai-emp-avatar searcher-av">🔍</div><div><div class="ai-emp-name">Scout</div><div class="ai-emp-role searcher-role">Web Searcher</div></div></div><div class="ai-emp-status"><div class="ai-emp-status-dot idle" id="scoutDot"></div><span id="scoutStatus">Idle</span></div><div class="ai-task-log" id="scoutLog"><span class="log-line">// Scout AI — Web Search Employee</span></div><div class="admin-form-row"><label class="admin-label">Task</label><input class="admin-input" id="scoutTask" placeholder="Find new schools"></div><div class="admin-form-row"><label class="admin-label">Emirates</label><select class="admin-select" id="scoutEmirate"><option>All</option><option>Dubai</option><option>Abu Dhabi</option></select></div><div class="ai-emp-controls"><button class="admin-btn admin-btn-primary" onclick="runAI('scout')">▶ Run Scout</button><button class="admin-btn admin-btn-ghost" onclick="stopAI('scout')">■ Stop</button></div><div id="scoutResults" style="margin-top:12px;font-size:12px;">No results yet.</div></div>
+      <div class="ai-employee-card filter"><div class="ai-emp-head"><div class="ai-emp-avatar filter-av">🔬</div><div><div class="ai-emp-name">Filter</div><div class="ai-emp-role filter-role">Data Filtration</div></div></div><div class="ai-emp-status"><div class="ai-emp-status-dot idle" id="filterDot"></div><span id="filterStatus">Idle</span></div><div class="ai-task-log" id="filterLog"><span class="log-line">// Filter AI — Data Quality Employee</span></div><div class="admin-form-row"><label class="admin-label">Mode</label><select class="admin-select" id="filterMode"><option>Full Clean</option><option>Remove Duplicates</option><option>Validate Prices</option></select></div><div class="admin-form-row"><label class="admin-label">Min Rating</label><input class="admin-input" id="filterMinRating" type="number" step="0.1" value="3.5"></div><div class="ai-emp-controls"><button class="admin-btn admin-btn-primary" onclick="runAI('filter')">▶ Run Filter</button><button class="admin-btn admin-btn-ghost" onclick="stopAI('filter')">■ Stop</button></div><div id="filterResults" style="margin-top:12px;font-size:12px;">No report yet.</div></div></div>
+      <div class="admin-card"><div class="admin-card-title">⚡ AI Pipeline</div><div style="display:flex;gap:12px;align-items:center;"><button class="admin-btn admin-btn-primary" onclick="runFullPipeline()">▶▶ Run Full Pipeline</button><label class="admin-toggle"><input type="checkbox" id="pipelineAutopublish"><span class="admin-toggle-slider"></span></label><span>Auto-publish</span></div><div id="pipelineLog" class="ai-task-log" style="margin-top:16px;"><span class="log-line">// Pipeline ready.</span></div></div></div>
+      <div id="admin-panel-automations" class="admin-panel"><div class="automation-list"><div class="automation-rule"><div class="auto-rule-icon">🔍</div><div class="auto-rule-info"><div class="auto-rule-name">Weekly Data Refresh</div><div class="auto-rule-desc">Scout scans for new schools weekly</div><div class="auto-rule-trigger">Every Monday 8AM</div></div><label class="admin-toggle"><input type="checkbox" checked><span class="admin-toggle-slider"></span></label></div><div class="automation-rule"><div class="auto-rule-icon">💰</div><div class="auto-rule-info"><div class="auto-rule-name">Price Monitor</div><div class="auto-rule-desc">Checks for price changes</div><div class="auto-rule-trigger">Daily 10AM</div></div><label class="admin-toggle"><input type="checkbox" checked><span class="admin-toggle-slider"></span></label></div><div class="automation-rule"><div class="auto-rule-icon">🔬</div><div class="auto-rule-info"><div class="auto-rule-name">Auto Filtration</div><div class="auto-rule-desc">Filter runs after Scout</div><div class="auto-rule-trigger">After Scout</div></div><label class="admin-toggle"><input type="checkbox"><span class="admin-toggle-slider"></span></label></div></div></div>
+      <div id="admin-panel-approvals" class="admin-panel"><div class="admin-card"><div class="admin-card-title">✅ AI Suggestions</div><div id="approvalsList"><div style="padding:40px;text-align:center;color:rgba(255,255,255,0.3);">No pending approvals.</div></div></div></div>
+      <div id="admin-panel-settings" class="admin-panel"><div class="settings-grid"><div class="admin-card"><div class="admin-card-title">🔧 Settings</div><div class="admin-form-row"><label class="admin-label">Admin Key</label><input class="admin-input" id="setNewKey" type="password" placeholder="Change key"></div><div class="admin-form-row"><label class="admin-label">Confirm Key</label><input class="admin-input" id="setConfirmKey" type="password"></div><button class="admin-btn admin-btn-primary" onclick="changeAdminKey()">Update Key</button></div></div></div>
+      <div id="admin-panel-logs" class="admin-panel"><div class="admin-card"><div class="activity-feed" id="fullLogFeed"></div></div></div>
+    </div>
+  </div>
+</div>
+<div id="admin-toast"><span class="toast-icon">✓</span><span id="adminToastMsg">Saved</span></div>
+
+<div id="comparisonModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h2 id="modalTitle">Compare License Program</h2><button class="modal-close" onclick="closeComparisonModal()">✕</button></div>
+    <form id="comparisonForm" onsubmit="handleFormSubmit(event)">
+      <div class="form-section"><h3>Which License Are You Interested In?</h3><div class="radio-group"><label class="radio-item"><input type="radio" name="licenseType" value="Car License" required><label>🚗 Car License</label></label><label class="radio-item"><input type="radio" name="licenseType" value="Motorcycle"><label>🏍️ Motorcycle</label></label><label class="radio-item"><input type="radio" name="licenseType" value="Light Bus"><label>🚐 Light Bus</label></label><label class="radio-item"><input type="radio" name="licenseType" value="Bus"><label>🚌 Bus</label></label><label class="radio-item"><input type="radio" name="licenseType" value="Light Truck"><label>🚚 Light Truck</label></label><label class="radio-item"><input type="radio" name="licenseType" value="Heavy Truck"><label>🚛 Heavy Truck</label></label><label class="radio-item"><input type="radio" name="licenseType" value="Forklift"><label>🚜 Forklift</label></label><label class="radio-item"><input type="radio" name="licenseType" value="Heavy Equipment"><label>🚧 Heavy Equipment</label></label></div></div>
+      <div class="form-section"><h3>Your Experience &amp; Background</h3>
+        <div class="form-group"><label id="homeLicenseLabel">Do you already hold a driving license in your home country?</label><div class="radio-group"><label class="radio-item"><input type="radio" name="homeCountryLicense" value="Yes" required><label>Yes</label></label><label class="radio-item"><input type="radio" name="homeCountryLicense" value="No" required><label>No</label></label></div></div>
+        <div class="form-group"><label id="experienceLabel" style="display:none;"></label><div class="radio-group" id="experienceGroup" style="display:none;"><label class="radio-item"><input type="radio" name="priorExperience" value="Yes"><label>Yes, I have experience</label></label><label class="radio-item"><input type="radio" name="priorExperience" value="No"><label>No, it's my first time</label></label></div></div>
+        <div id="vehicleSpecificSection" style="display:none;"><div class="form-group" id="vehicleSpecificContent"></div></div>
+      </div>
+      <div class="form-section"><h3>Which Emirates Are You Interested In?</h3><div class="checkbox-group"><label class="checkbox-item"><input type="checkbox" name="emirates" value="Dubai"><label>Dubai</label></label><label class="checkbox-item"><input type="checkbox" name="emirates" value="Abu Dhabi"><label>Abu Dhabi</label></label><label class="checkbox-item"><input type="checkbox" name="emirates" value="Sharjah"><label>Sharjah</label></label><label class="checkbox-item"><input type="checkbox" name="emirates" value="Ajman"><label>Ajman</label></label><label class="checkbox-item"><input type="checkbox" name="emirates" value="Ras Al Khaimah"><label>Ras Al Khaimah</label></label><label class="checkbox-item"><input type="checkbox" name="emirates" value="Fujairah"><label>Fujairah</label></label><label class="checkbox-item"><input type="checkbox" name="emirates" value="Umm Al Quwain"><label>Umm Al Quwain</label></label></div></div>
+      <div class="form-section"><h3>Contact Information</h3><div class="form-group"><label for="fullName">Full Name *</label><input type="text" id="fullName" required></div><div class="form-group"><label for="email">Email *</label><input type="email" id="email" required></div><div class="form-group"><label for="phone">Phone *</label><input type="tel" id="phone" required></div><div class="form-group"><label for="additionalInfo">Additional Info</label><textarea id="additionalInfo" rows="2"></textarea></div></div>
+      <div class="form-section"><label class="checkbox-item"><input type="checkbox" name="consent" required><label>I agree to be contacted</label></label></div>
+      <button type="submit" class="submit-btn">Get My Personalised Comparison →</button>
+    </form>
+  </div>
+</div>
+</div>
+
+
+<script>
+// ================================================================
+//  SimpleUAE — Fully Wired Frontend Script
+//  All data flows through the real Next.js API backend.
+//  AI Employee sections retain their hook stubs for later wiring.
+// ================================================================
+
+// ── CONFIG ──────────────────────────────────────────────────────
+const API = '';  // same-origin; prefix with http://localhost:3000 if serving index.html directly
+
+// ── VEHICLE CONFIGS ─────────────────────────────────────────────
+const VEHICLE_CONFIGS = {
+  'Car License':      { title: 'Car License Program',      homeLicenseQ: 'Do you hold a driving license in your home country?', specificQ: null },
+  'Motorcycle':       { title: 'Motorcycle License Program', homeLicenseQ: 'Do you hold any license in your home country?', experienceQ: 'Have you ridden a motorcycle before?', specificQ: null },
+  'Light Bus':        { title: 'Light Bus License Program', homeLicenseQ: 'Do you hold a car/light vehicle license?', experienceQ: 'Do you have prior bus experience?', specificQ: null },
+  'Bus':              { title: 'Heavy Bus License Program', homeLicenseQ: 'Do you hold any bus or HGV license?', experienceQ: 'Do you have prior bus experience?', specificQ: null },
+  'Light Truck':      { title: 'Light Truck License Program', homeLicenseQ: 'Do you hold a car license?', experienceQ: 'Have you driven a pickup truck before?', specificQ: null },
+  'Heavy Truck':      { title: 'Heavy Truck License Program', homeLicenseQ: 'Do you hold any truck/HGV license?', experienceQ: 'Do you have prior heavy truck experience?', specificQ: null },
+  'Forklift':         { title: 'Forklift Certification',   homeLicenseQ: 'Do you hold any forklift certification?', experienceQ: 'Have you operated a forklift before?', specificQ: null },
+  'Heavy Equipment':  { title: 'Heavy Equipment License',  homeLicenseQ: 'Do you hold any heavy machinery certification?', experienceQ: 'Have you operated heavy equipment before?', specificQ: null }
+};
+
+// ── STATE ────────────────────────────────────────────────────────
+let adminToken = sessionStorage.getItem('suae_token') || null;
+let editingSchoolId = null;
+let aiRunning = { scout: false, filter: false };
+let revealObserver = null;
+
+// ── HELPERS ──────────────────────────────────────────────────────
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` };
+}
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API + path, opts);
+  const data = await res.json().catch(() => ({ success: false, message: 'Bad response' }));
+  return { ok: res.ok, status: res.status, data };
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('admin-toast');
+  const m = document.getElementById('adminToastMsg');
+  if (!t || !m) return;
+  m.textContent = msg;
+  t.style.borderColor = isError ? 'rgba(248,113,113,0.4)' : 'rgba(184,132,74,0.3)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function setStatus(online) {
+  const el = document.querySelector('.admin-status-text');
+  if (el) el.textContent = online ? 'Live · Backend: online' : 'Live · Backend: offline';
+}
+
+// ── FRONTEND MODAL FUNCTIONS ──────────────────────────────────────
+function openComparisonModal(license) {
+  document.getElementById('comparisonModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  if (license) {
+    const rad = Array.from(document.querySelectorAll('input[name="licenseType"]')).find(r => r.value === license);
+    if (rad) rad.checked = true;
+    personalizeForm(license);
+  }
+}
+function closeComparisonModal() {
+  document.getElementById('comparisonModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+function personalizeForm(licenseType) {
+  const cfg = VEHICLE_CONFIGS[licenseType];
+  if (!cfg) return;
+  const homeLbl = document.getElementById('homeLicenseLabel');
+  if (homeLbl && cfg.homeLicenseQ) homeLbl.textContent = cfg.homeLicenseQ;
+  const expLabel = document.getElementById('experienceLabel');
+  const expGroup = document.getElementById('experienceGroup');
+  if (cfg.experienceQ) {
+    expLabel.style.display = 'block';
+    expGroup.style.display = 'flex';
+    expLabel.textContent = cfg.experienceQ;
+  } else {
+    expLabel.style.display = 'none';
+    expGroup.style.display = 'none';
+  }
+  const specSection = document.getElementById('vehicleSpecificSection');
+  if (specSection) specSection.style.display = 'none';
+}
+function toggleExperienceQuestion() {
+  const selected = Array.from(document.querySelectorAll('input[name="licenseType"]')).find(i => i.checked)?.value;
+  if (selected) personalizeForm(selected);
+}
+document.querySelectorAll('input[name="licenseType"]').forEach(input => input.addEventListener('change', toggleExperienceQuestion));
+
+// ── LEAD FORM SUBMIT (REAL API) ───────────────────────────────────
+async function handleFormSubmit(e) {
+  e.preventDefault();
+  const btn = document.querySelector('.submit-btn');
+  const origText = btn.textContent;
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+
+  const fullName = document.getElementById('fullName').value.trim();
+  const email    = document.getElementById('email').value.trim();
+  const phone    = document.getElementById('phone').value.trim();
+  const licenseType = document.querySelector('input[name="licenseType"]:checked')?.value;
+  const homeCountryLicense = document.querySelector('input[name="homeCountryLicense"]:checked')?.value;
+  const priorExperience = document.querySelector('input[name="priorExperience"]:checked')?.value;
+  const emirates = Array.from(document.querySelectorAll('input[name="emirates"]:checked')).map(c => c.value);
+  const additionalInfo = document.getElementById('additionalInfo').value.trim();
+  const consent = document.querySelector('input[name="consent"]')?.checked;
+
+  if (!fullName || !email || !phone || !licenseType || !homeCountryLicense) {
+    showToast('Please fill all required fields', true);
+    btn.textContent = origText;
+    btn.disabled = false;
+    return;
+  }
+
+  const { ok, data } = await apiFetch('/api/leads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fullName, email, phone, licenseType,
+      homeCountryLicense, priorExperience, emirates,
+      additionalInfo, consent: String(consent)
+    })
+  });
+
+  if (ok && data.success) {
+    closeComparisonModal();
+    document.getElementById('comparisonForm').reset();
+    // Success banner
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#b8844a,#c4673a);color:#fff;padding:16px 32px;border-radius:12px;font-family:DM Sans,sans-serif;font-weight:600;z-index:99999;box-shadow:0 8px 32px rgba(0,0,0,0.4);text-align:center;';
+    banner.innerHTML = `✓ ${data.message}`;
+    document.body.appendChild(banner);
+    setTimeout(() => banner.remove(), 5000);
+  } else {
+    showToast(data.message || 'Submission failed. Please try again.', true);
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+
+// ── ADMIN AUTH ────────────────────────────────────────────────────
+function openAdminGate() {
+  document.getElementById('admin-gate').classList.add('show');
+  setTimeout(() => document.getElementById('adminKeyInput').focus(), 200);
+}
+function closeAdminGate() {
+  document.getElementById('admin-gate').classList.remove('show');
+  document.getElementById('adminKeyInput').value = '';
+  document.getElementById('gateError').textContent = '';
+}
+
+async function verifyAdminKey() {
+  const val = document.getElementById('adminKeyInput').value.trim();
+  const errEl = document.getElementById('gateError');
+  errEl.textContent = 'Authenticating…';
+
+  const { ok, data } = await apiFetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: val })
+  });
+
+  if (ok && data.success) {
+    adminToken = data.token;
+    sessionStorage.setItem('suae_token', adminToken);
+    closeAdminGate();
+    document.getElementById('admin-panel').classList.add('show');
+    setStatus(true);
+    loadDashboardStats();
+    loadSchoolsTable();
+    loadLeadsTable();
+    loadApprovalsPanel();
+    loadContentFields();
+    loadFullLogs();
+  } else {
+    errEl.textContent = data.message || 'Invalid key.';
+    adminToken = null;
+    sessionStorage.removeItem('suae_token');
+  }
+}
+
+async function adminLogout() {
+  await apiFetch('/api/auth/logout', { method: 'POST', headers: authHeaders() }).catch(() => {});
+  adminToken = null;
+  sessionStorage.removeItem('suae_token');
+  document.getElementById('admin-panel').classList.remove('show');
+  setStatus(false);
+}
+
+// ── ADMIN PANEL NAVIGATION ────────────────────────────────────────
+function showAdminPanel(panelId, btn) {
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`admin-panel-${panelId}`).classList.add('active');
+  // Sidebar nav active state
+  document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
+  if (btn && btn.classList.contains('admin-nav-item')) btn.classList.add('active');
+  // Mobile tab bar active state
+  document.querySelectorAll('.admin-mobile-tab').forEach(t => t.classList.remove('active'));
+  if (btn && btn.classList.contains('admin-mobile-tab')) btn.classList.add('active');
+  const titles = { dashboard: 'Dashboard', schools: 'Schools', content: 'Content Editor', leads: 'Leads', ai: 'AI Employees', automations: 'Automations', approvals: 'Approvals', settings: 'Settings', logs: 'Activity Log' };
+  document.getElementById('adminPageTitle').innerText = titles[panelId] || 'Dashboard';
+  if (panelId === 'logs')      loadFullLogs();
+  if (panelId === 'leads')     loadLeadsTable();
+  if (panelId === 'schools')   loadSchoolsTable();
+  if (panelId === 'approvals') loadApprovalsPanel();
+  if (panelId === 'dashboard') loadDashboardStats();
+  if (panelId === 'content')   loadContentFields();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────
+async function loadDashboardStats() {
+  // Schools count
+  const sr = await apiFetch('/api/schools/count', { headers: authHeaders() }).catch(() => null);
+  if (sr?.ok) document.getElementById('statSchools').innerText = sr.data.total ?? 0;
+
+  // Leads count
+  const lr = await apiFetch('/api/leads/count', { headers: authHeaders() }).catch(() => null);
+  if (lr?.ok) {
+    document.getElementById('statLeads').innerText = lr.data.total ?? 0;
+    document.getElementById('leadsCountBadge').innerText = lr.data.new ?? 0;
+  }
+
+  // Analytics
+  const ar = await apiFetch('/api/analytics/dashboard', { headers: authHeaders() }).catch(() => null);
+  if (ar?.ok && ar.data.data) {
+    const d = ar.data.data;
+    document.getElementById('statViews').innerText = d.pageViewsToday ?? d.totalPageViews ?? '—';
+  }
+
+  document.getElementById('statAITasks').innerText = 0; // hook for later AI wiring
+}
+
+// ── SCHOOLS (REAL CRUD) ───────────────────────────────────────────
+async function loadSchoolsTable() {
+  // Fetch all schools (admin sees all statuses)
+  const r = await apiFetch('/api/schools?status=all', { headers: authHeaders() }).catch(() => null);
+  const schools = (r?.ok ? r.data.data : null) || [];
+
+  // Update admin table
+  const tbody = document.getElementById('schoolsTableBody');
+  if (tbody) {
+    tbody.innerHTML = schools.length
+      ? schools.map(s => `
+          <tr>
+            <td><strong>${escHtml(s.name)}</strong></td>
+            <td>${escHtml(s.emirate)}</td>
+            <td>AED ${s.priceFrom}</td>
+            <td>${s.rating ?? '—'}★</td>
+            <td><span style="padding:3px 10px;border-radius:4px;font-size:11px;background:${s.status==='live'?'rgba(74,222,128,0.15)':'rgba(255,200,0,0.1)'};color:${s.status==='live'?'#4ade80':'#fbbf24'}">${s.status}</span></td>
+            <td>
+              <button class="admin-btn admin-btn-ghost admin-btn-sm" onclick="editSchool('${s._id}')">Edit</button>
+              <button class="admin-btn admin-btn-danger admin-btn-sm" onclick="deleteSchool('${s._id}')">Del</button>
+            </td>
+          </tr>`)
+        .join('')
+      : '<tr><td colspan="6" style="text-align:center;padding:32px;color:rgba(255,255,255,0.3)">No schools yet — add one!</td></tr>';
+  }
+
+  // Update public schools strip (only live)
+  const strip = document.getElementById('schoolsStrip');
+  if (strip) {
+    const live = schools.filter(s => s.status === 'live');
+    strip.innerHTML = live.length
+      ? live.map(s => `
+          <div class="school-card reveal-fade">
+            <div class="school-logo">${escHtml(s.code || s.name[0])}</div>
+            <div class="school-name">${escHtml(s.name)}</div>
+            <div class="school-location">📍 ${escHtml(s.emirate)}</div>
+            <div class="school-price">From <span>AED ${s.priceFrom}</span></div>
+            <div class="school-tags">${(s.tags || []).map(t => `<span class="school-tag">${escHtml(t)}</span>`).join('')}</div>
+          </div>`)
+        .join('')
+      : '<p style="color:rgba(255,255,255,0.3);padding:24px">No schools listed yet.</p>';
+    if (revealObserver) strip.querySelectorAll('.school-card').forEach(el => revealObserver.observe(el));
+  }
+}
+
+function openSchoolModal(id) {
+  editingSchoolId = id || null;
+  document.getElementById('schoolModalTitle').innerText = id ? 'Edit School' : 'Add School';
+  document.getElementById('schoolModal').style.display = 'flex';
+  // Clear fields
+  document.querySelectorAll('#schoolModal input, #schoolModal select').forEach(el => { if (el.type !== 'button') el.value = ''; });
+  document.getElementById('s-emirate').value = 'Dubai';
+  document.getElementById('s-status').value = 'pending';
+
+  if (id) {
+    apiFetch(`/api/schools/${id}`, { headers: authHeaders() }).then(({ ok, data }) => {
+      if (!ok) return;
+      const s = data.data;
+      document.getElementById('s-name').value     = s.name || '';
+      document.getElementById('s-code').value     = s.code || '';
+      document.getElementById('s-emirate').value  = s.emirate || 'Dubai';
+      document.getElementById('s-location').value = s.location || '';
+      document.getElementById('s-price').value    = s.priceFrom || '';
+      document.getElementById('s-rating').value   = s.rating || '';
+      document.getElementById('s-reviews').value  = s.reviews || '';
+      document.getElementById('s-tags').value     = (s.tags || []).join(', ');
+      document.getElementById('s-status').value   = s.status || 'pending';
+    });
+  }
+}
+function closeSchoolModal() {
+  document.getElementById('schoolModal').style.display = 'none';
+  editingSchoolId = null;
+}
+
+async function saveSchool() {
+  const data = {
+    name:      document.getElementById('s-name').value.trim(),
+    code:      document.getElementById('s-code').value.trim().toUpperCase(),
+    emirate:   document.getElementById('s-emirate').value,
+    location:  document.getElementById('s-location').value.trim(),
+    priceFrom: parseFloat(document.getElementById('s-price').value) || 0,
+    rating:    parseFloat(document.getElementById('s-rating').value) || 0,
+    reviews:   document.getElementById('s-reviews').value.trim(),
+    tags:      document.getElementById('s-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+    status:    document.getElementById('s-status').value
+  };
+
+  if (!data.name || !data.code || !data.emirate) {
+    showToast('Name, code and emirate are required', true);
+    return;
+  }
+
+  let r;
+  if (editingSchoolId) {
+    r = await apiFetch(`/api/schools/${editingSchoolId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(data) });
+  } else {
+    r = await apiFetch('/api/schools', { method: 'POST', headers: authHeaders(), body: JSON.stringify(data) });
+  }
+
+  if (r.ok && r.data.success) {
+    closeSchoolModal();
+    await loadSchoolsTable();
+    await loadDashboardStats();
+    showToast(editingSchoolId ? 'School updated ✓' : 'School added ✓');
+  } else {
+    showToast(r.data.message || 'Save failed', true);
+  }
+}
+
+async function deleteSchool(id) {
+  if (!confirm('Delete this school? This cannot be undone.')) return;
+  const r = await apiFetch(`/api/schools/${id}`, { method: 'DELETE', headers: authHeaders() });
+  if (r.ok && r.data.success) {
+    await loadSchoolsTable();
+    await loadDashboardStats();
+    showToast('School deleted');
+  } else {
+    showToast(r.data.message || 'Delete failed', true);
+  }
+}
+
+function editSchool(id) { openSchoolModal(id); }
+
+async function syncToWebsite() {
+  await loadSchoolsTable();
+  showToast('Website synced with latest data ✓');
+}
+
+// ── LEADS (REAL API) ──────────────────────────────────────────────
+async function loadLeadsTable() {
+  const r = await apiFetch('/api/leads?limit=100', { headers: authHeaders() }).catch(() => null);
+  const leads = r?.ok ? (r.data.data || []) : [];
+  const total = r?.ok ? (r.data.total || 0) : 0;
+
+  const tbody = document.getElementById('leadsTableBody');
+  if (tbody) {
+    tbody.innerHTML = leads.length
+      ? leads.map(l => `
+          <tr>
+            <td><strong>${escHtml(l.fullName || '')}</strong></td>
+            <td>${escHtml(l.email || '')}</td>
+            <td>${escHtml(l.phone || '')}</td>
+            <td>${escHtml(l.licenseType || '')}</td>
+            <td>${(l.emirates || []).join(', ')}</td>
+            <td>${new Date(l.createdAt || Date.now()).toLocaleDateString()}</td>
+            <td>
+              <span style="padding:3px 8px;border-radius:4px;font-size:10px;background:${l.status==='new'?'rgba(59,130,246,0.15)':'rgba(74,222,128,0.1)'};color:${l.status==='new'?'#60a5fa':'#4ade80'}">${l.status||'new'}</span>
+              <button class="admin-btn admin-btn-danger admin-btn-sm" style="margin-left:6px" onclick="deleteLead('${l._id}')">Del</button>
+            </td>
+          </tr>`)
+        .join('')
+      : '<tr><td colspan="7" style="text-align:center;padding:32px;color:rgba(255,255,255,0.3)">No leads yet</td></tr>';
+  }
+
+  // Update badges
+  const newCount = leads.filter(l => l.status === 'new').length;
+  const badgeEl = document.getElementById('leadsCountBadge');
+  if (badgeEl) badgeEl.innerText = newCount;
+  const statEl = document.getElementById('statLeads');
+  if (statEl) statEl.innerText = total;
+}
+
+async function deleteLead(id) {
+  if (!confirm('Delete this lead?')) return;
+  const r = await apiFetch(`/api/leads/${id}`, { method: 'DELETE', headers: authHeaders() });
+  if (r.ok && r.data.success) {
+    await loadLeadsTable();
+    showToast('Lead deleted');
+  } else {
+    showToast(r.data.message || 'Delete failed', true);
+  }
+}
+
+async function exportLeads() {
+  // Use the real export endpoint
+  const res = await fetch(API + '/api/leads/export', { headers: authHeaders() });
+  if (!res.ok) { showToast('Export failed', true); return; }
+  const blob = await res.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `leads-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Leads exported ✓');
+}
+
+// ── CONTENT EDITOR (REAL API) ─────────────────────────────────────
+async function loadContentFields() {
+  const r = await apiFetch('/api/content').catch(() => null);
+  if (!r?.ok || !r.data.data) return;
+  const d = r.data.data;
+
+  // Hero
+  if (d.hero) {
+    document.getElementById('heroL1').value   = d.hero.line1    || '';
+    document.getElementById('heroL2').value   = d.hero.line2    || '';
+    document.getElementById('heroL3').value   = d.hero.line3    || '';
+    document.getElementById('heroSub').value  = d.hero.subtitle || '';
+    document.getElementById('heroCta').value  = d.hero.ctaText  || '';
+  }
+  // Footer
+  if (d.footer) {
+    const fti = document.getElementById('footerTaglineInput');
+    const fci = document.getElementById('footerCopyrightInput');
+    if (fti) fti.value = d.footer.tagline || '';
+    if (fci) fci.value = d.footer.copyright || '';
+  }
+  // Stats
+  if (d.stats) {
+    const s = d.stats;
+    if (s.schools)  { document.getElementById('stat1Num').value = s.schools.number;  document.getElementById('stat1Label').value = s.schools.label; }
+    if (s.licences) { document.getElementById('stat2Num').value = s.licences.number; document.getElementById('stat2Label').value = s.licences.label; }
+    if (s.emirates) { document.getElementById('stat3Num').value = s.emirates.number; document.getElementById('stat3Label').value = s.emirates.label; }
+    if (s.savings)  { document.getElementById('stat4Num').value = s.savings.number;  document.getElementById('stat4Label').value = s.savings.label; }
+  }
+  // Testimonials
+  if (d.testimonials) loadTestimonialFields(d.testimonials);
+
+  // Apply to public page immediately
+  applyContentToPage(d);
+}
+
+function applyContentToPage(d) {
+  if (!d) return;
+  // Hero
+  if (d.hero) {
+    const title = document.querySelector('.hero-title');
+    if (title) title.innerHTML = `${escHtml(d.hero.line1)} <em>${escHtml(d.hero.line2)}</em><span class="line2">${escHtml(d.hero.line3)}</span>`;
+    const sub = document.querySelector('.hero-sub');
+    if (sub) sub.textContent = d.hero.subtitle;
+    document.querySelectorAll('.btn-warm').forEach(b => { if (d.hero.ctaText) b.textContent = d.hero.ctaText; });
+  }
+  // Footer
+  if (d.footer) {
+    const ft = document.getElementById('footerTagline');
+    if (ft) ft.textContent = d.footer.tagline;
+    const fc = document.getElementById('footerCopyright');
+    if (fc) fc.textContent = d.footer.copyright;
+  }
+  // Stats bar - map by key order matching HTML order: schools, licences, emirates, savings
+  if (d.stats) {
+    const sNums  = document.querySelectorAll('.stat-number');
+    const sDescs = document.querySelectorAll('.stat-desc');
+    const ordered = ['schools','licences','emirates','savings'];
+    ordered.forEach((key, i) => {
+      const kv = d.stats[key];
+      if (!kv) return;
+      if (sNums[i])  sNums[i].textContent  = kv.number;
+      if (sDescs[i]) sDescs[i].textContent = kv.label;
+    });
+  }
+}
+
+function loadTestimonialFields(testimonials) {
+  const container = document.getElementById('testiList');
+  if (!container) return;
+  container.innerHTML = testimonials.map((t, i) => `
+    <div style="border:1px solid rgba(184,132,74,0.1);border-radius:8px;padding:16px;margin-bottom:12px;">
+      <input class="admin-input" style="margin-bottom:8px" id="testi-name-${i}" placeholder="Name" value="${escAttr(t.name||'')}">
+      <input class="admin-input" style="margin-bottom:8px" id="testi-role-${i}" placeholder="Role" value="${escAttr(t.role||'')}">
+      <textarea class="admin-textarea" id="testi-quote-${i}" placeholder="Quote" rows="2">${escHtml(t.quote||'')}</textarea>
+      <button class="admin-btn admin-btn-danger admin-btn-sm" style="margin-top:8px" onclick="this.parentElement.remove()">Remove</button>
+    </div>`).join('');
+}
+
+async function saveContent(section) {
+  let body = {};
+
+  if (section === 'hero') {
+    body = {
+      line1:    document.getElementById('heroL1').value.trim(),
+      line2:    document.getElementById('heroL2').value.trim(),
+      line3:    document.getElementById('heroL3').value.trim(),
+      subtitle: document.getElementById('heroSub').value.trim(),
+      ctaText:  document.getElementById('heroCta').value.trim()
+    };
+  } else if (section === 'footer') {
+    body = {
+      tagline:   document.getElementById('footerTaglineInput').value.trim(),
+      copyright: document.getElementById('footerCopyrightInput').value.trim()
+    };
+  } else if (section === 'stats') {
+    body = {
+      schools:  { number: document.getElementById('stat1Num').value.trim(), label: document.getElementById('stat1Label').value.trim() },
+      licences: { number: document.getElementById('stat2Num').value.trim(), label: document.getElementById('stat2Label').value.trim() },
+      emirates: { number: document.getElementById('stat3Num').value.trim(), label: document.getElementById('stat3Label').value.trim() },
+      savings:  { number: document.getElementById('stat4Num').value.trim(), label: document.getElementById('stat4Label').value.trim() }
+    };
+  } else if (section === 'testimonials') {
+    const items = [];
+    document.querySelectorAll('#testiList > div').forEach((el, i) => {
+      const n = el.querySelector('[id^="testi-name"]');
+      const r = el.querySelector('[id^="testi-role"]');
+      const q = el.querySelector('[id^="testi-quote"]');
+      if (n && r && q) items.push({ name: n.value.trim(), role: r.value.trim(), quote: q.value.trim() });
+    });
+    body = items;
+  }
+
+  const r = await apiFetch(`/api/content/${section}`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  if (r.ok && r.data.success) {
+    showToast(`${section} content saved ✓`);
+    // Re-fetch and apply to live page immediately
+    const full = await apiFetch('/api/content').catch(() => null);
+    if (full?.ok) applyContentToPage(full.data.data);
+    if (section === 'testimonials') loadTestimonials();
+  } else {
+    showToast(r.data.message || 'Save failed', true);
+  }
+}
+
+function addTestimonial() {
+  const container = document.getElementById('testiList');
+  if (!container) return;
+  const i = Date.now();
+  container.innerHTML += `
+    <div style="border:1px solid rgba(184,132,74,0.1);border-radius:8px;padding:16px;margin-bottom:12px;">
+      <input class="admin-input" style="margin-bottom:8px" id="testi-name-${i}" placeholder="Name">
+      <input class="admin-input" style="margin-bottom:8px" id="testi-role-${i}" placeholder="Role (e.g. Car License · Dubai)">
+      <textarea class="admin-textarea" id="testi-quote-${i}" placeholder="Quote" rows="2"></textarea>
+      <button class="admin-btn admin-btn-danger admin-btn-sm" style="margin-top:8px" onclick="this.parentElement.remove()">Remove</button>
+    </div>`;
+}
+
+function switchContentTab(tab, btn) {
+  document.querySelectorAll('.content-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ctab-hero').style.display         = tab === 'hero'         ? 'block' : 'none';
+  document.getElementById('ctab-stats').style.display        = tab === 'stats'        ? 'block' : 'none';
+  document.getElementById('ctab-testimonials').style.display = tab === 'testimonials' ? 'block' : 'none';
+  document.getElementById('ctab-footer').style.display       = tab === 'footer'       ? 'block' : 'none';
+}
+
+// ── TESTIMONIALS (PUBLIC PAGE) ────────────────────────────────────
+async function loadTestimonials() {
+  const r = await apiFetch('/api/content/testimonials').catch(() => null);
+  const testimonials = (r?.ok && Array.isArray(r.data.data)) ? r.data.data : [];
+  const grid = document.getElementById('testimonialsGrid');
+  if (!grid) return;
+  grid.innerHTML = testimonials.length
+    ? testimonials.map(t => `
+        <div class="testi-card reveal-fade">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-quote">"${escHtml(t.quote)}"</p>
+          <div class="testi-author"><strong>${escHtml(t.name)}</strong><span>${escHtml(t.role)}</span></div>
+        </div>`)
+      .join('')
+    : '';
+  if (revealObserver) grid.querySelectorAll('.testi-card').forEach(el => revealObserver.observe(el));
+}
+
+// ── LOGS (REAL API) ───────────────────────────────────────────────
+async function loadFullLogs() {
+  const r = await apiFetch('/api/logs?limit=100', { headers: authHeaders() }).catch(() => null);
+  const logs = r?.ok ? (r.data.data || []) : [];
+  const feed = document.getElementById('fullLogFeed');
+  if (!feed) return;
+  feed.innerHTML = logs.length
+    ? logs.map(l => `
+        <div class="activity-item">
+          <div class="activity-dot"></div>
+          <div>
+            <div class="activity-text">${escHtml(l.message || l.action || '')}</div>
+            <div class="activity-time">${new Date(l.createdAt || Date.now()).toLocaleString()} · ${escHtml(l.category || '')}</div>
+          </div>
+        </div>`)
+      .join('')
+    : '<div style="padding:20px;color:rgba(255,255,255,0.3);">No logs yet</div>';
+}
+
+// ── SETTINGS (REAL API) ───────────────────────────────────────────
+async function changeAdminKey() {
+  const k1 = document.getElementById('setNewKey')?.value.trim();
+  const k2 = document.getElementById('setConfirmKey')?.value.trim();
+  if (!k1 || k1 !== k2) { showToast('Keys do not match', true); return; }
+
+  const r = await apiFetch('/api/auth/key', {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify({ newKey: k1 })
+  });
+  if (r.ok && r.data.success) {
+    showToast('Admin key updated ✓');
+    document.getElementById('setNewKey').value = '';
+    document.getElementById('setConfirmKey').value = '';
+  } else {
+    showToast(r.data.message || 'Update failed', true);
+  }
+}
+
+// ── ADMIN SAVE ALL ────────────────────────────────────────────────
+async function adminSaveAll() {
+  showToast('All changes auto-saved via individual section saves ✓');
+}
+
+// ── AI EMPLOYEES (HOOK STUBS — wire later) ────────────────────────
+function runAI(type) {
+  if (aiRunning[type]) return;
+  aiRunning[type] = true;
+  const dot    = document.getElementById(`${type}Dot`);
+  const status = document.getElementById(`${type}Status`);
+  const log    = document.getElementById(`${type}Log`);
+  dot.className = 'ai-emp-status-dot running';
+  status.innerText = 'Running…';
+  if (log) log.innerHTML += `<div class="log-line">> [${new Date().toLocaleTimeString()}] ${type} started — hook ready for AI wiring</div>`;
+
+  // HOOK: Replace this setTimeout with real AI API call
+  // e.g. apiFetch(`/api/ai/${type}/run`, { method:'POST', headers:authHeaders(), body:JSON.stringify({task}) })
+  setTimeout(() => {
+    dot.className = 'ai-emp-status-dot idle';
+    status.innerText = 'Idle (hook ready)';
+    if (log) log.innerHTML += `<div class="log-line">> [${new Date().toLocaleTimeString()}] ${type} hook — awaiting AI connection</div>`;
+    document.getElementById(`${type}Results`).textContent = 'AI hook ready — connect your AI employee to /api/ai/' + type + '/run';
+    showToast(`${type} AI hook triggered`);
+    aiRunning[type] = false;
+  }, 1500);
+}
+
+function stopAI(type) {
+  aiRunning[type] = false;
+  document.getElementById(`${type}Dot`).className = 'ai-emp-status-dot idle';
+  document.getElementById(`${type}Status`).innerText = 'Stopped';
+}
+
+function runFullPipeline() {
+  // HOOK: Wire to /api/ai/pipeline/run
+  showToast('Pipeline hook ready — connect your pipeline to /api/ai/pipeline/run');
+}
+
+// ── APPROVALS (local stub — wire when AI is connected) ────────────
+let pendingApprovals = [];
+
+function loadApprovalsPanel() {
+  const container = document.getElementById('approvalsList');
+  if (!container) return;
+  const badge = document.getElementById('approvalsBadge');
+  if (badge) badge.innerText = pendingApprovals.length;
+  if (!pendingApprovals.length) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:rgba(255,255,255,0.3);">No pending approvals.</div>';
+    return;
+  }
+  container.innerHTML = pendingApprovals.map(a => `
+    <div style="border:1px solid rgba(184,132,74,0.2);border-radius:12px;padding:20px;margin-bottom:16px;">
+      <h3 style="color:var(--sand);">${escHtml(a.title)}</h3>
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;">${escHtml(a.description)}</p>
+      <div style="display:flex;gap:12px;margin-top:12px;">
+        <button class="admin-btn admin-btn-success" onclick="approveSuggestion('${a.id}')">✅ Approve</button>
+        <button class="admin-btn admin-btn-danger" onclick="rejectSuggestion('${a.id}')">❌ Reject</button>
+      </div>
+    </div>`).join('');
+}
+
+async function approveSuggestion(id) {
+  const item = pendingApprovals.find(a => a.id === id);
+  if (item && item.schoolData) {
+    // Push to real backend if the AI scout provided school data
+    const r = await apiFetch('/api/schools', { method: 'POST', headers: authHeaders(), body: JSON.stringify(item.schoolData) });
+    if (r.ok) { await loadSchoolsTable(); showToast('School approved & published ✓'); }
+  } else {
+    showToast('Suggestion approved (no school data to publish)');
+  }
+  pendingApprovals = pendingApprovals.filter(a => a.id !== id);
+  loadApprovalsPanel();
+}
+
+function rejectSuggestion(id) {
+  pendingApprovals = pendingApprovals.filter(a => a.id !== id);
+  loadApprovalsPanel();
+  showToast('Suggestion rejected');
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(str) {
+  return String(str ?? '').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── ANIMATIONS (unchanged from original) ─────────────────────────
+(function(){
+  const canvas = document.getElementById('loaderCanvas');
+  if(canvas){
+    const ctx = canvas.getContext('2d');
+    let W = canvas.width = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
+    const particles = [];
+    for(let i = 0; i < 90; i++){
+      particles.push({ x:W/2+(Math.random()-0.5)*300, y:H/2+(Math.random()-0.5)*300, vx:(Math.random()-0.5)*0.5, vy:(Math.random()-0.5)*0.5, size:Math.random()*2+0.5, alpha:Math.random()*0.5+0.2, color:`rgba(184,132,74,${Math.random()*0.5+0.1})` });
+    }
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>W) p.vx*=-1; if(p.y<0||p.y>H) p.vy*=-1; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fillStyle=p.color; ctx.fill(); });
+      if(!document.getElementById('loader').classList.contains('exit')) requestAnimationFrame(draw);
+    }
+    draw();
+  }
+  const fill = document.getElementById('ldrFill');
+  const pct  = document.getElementById('ldrPct');
+  const words = document.getElementById('ldrWord');
+  let prog = 0;
+  const wordList = ['Locating schools…','Checking licenses…','Comparing prices…','Almost ready…'];
+  let widx = 0;
+  function nextWord(){ words.classList.remove('shown'); setTimeout(() => { words.textContent = wordList[widx%wordList.length]; words.classList.add('shown'); widx++; }, 300); }
+  setTimeout(nextWord, 600);
+  const iv = setInterval(() => {
+    const step = prog<40?2.5:prog<70?1.4:prog<90?0.7:0.2;
+    prog = Math.min(prog+step, 98);
+    fill.style.width = prog+'%';
+    pct.textContent = Math.floor(prog)+'%';
+    if(prog%25<step) nextWord();
+  }, 60);
+  setTimeout(() => {
+    clearInterval(iv);
+    fill.style.width = '100%'; pct.textContent = '100%';
+    words.textContent = 'Welcome ✦'; words.classList.add('shown');
+    setTimeout(() => {
+      document.getElementById('loader').classList.add('exit');
+      document.getElementById('site-wrapper').classList.add('revealed');
+      setTimeout(() => document.getElementById('loader').style.display='none', 1200);
+    }, 400);
+  }, 2800);
+})();
+
+// CUSTOM CURSOR
+(function(){
+  const outer = document.getElementById('cursor-outer');
+  const inner = document.getElementById('cursor-inner');
+  if(!outer||!inner) return;
+  let mx=-100, my=-100, ox=-100, oy=-100;
+  document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; inner.style.left=mx+'px'; inner.style.top=my+'px'; inner.style.opacity='1'; outer.style.opacity='1'; });
+  document.addEventListener('mouseleave', () => { inner.style.opacity='0'; outer.style.opacity='0'; });
+  function animateOuter(){ ox+=(mx-ox)*0.15; oy+=(my-oy)*0.15; outer.style.left=ox+'px'; outer.style.top=oy+'px'; requestAnimationFrame(animateOuter); }
+  animateOuter();
+  const clickables = 'a, button, .license-btn, .lic-card, .school-card, .step-card, .testi-card, .nav-toggle, .admin-nav-item, .admin-btn, .modal-close, .admin-gate-close, .content-tab, .radio-item, .checkbox-item, .submit-btn, .emirate-select, .search-btn, .btn-warm, .btn-ghost, .btn-white';
+  document.querySelectorAll(clickables).forEach(el => {
+    el.addEventListener('mouseenter', () => { outer.style.width='56px'; outer.style.height='56px'; outer.style.borderColor='var(--rust)'; });
+    el.addEventListener('mouseleave', () => { outer.style.width='36px'; outer.style.height='36px'; outer.style.borderColor='var(--amber)'; });
+  });
+})();
+
+// SCROLL REVEAL
+(function(){
+  revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('visible'); });
+  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+  document.querySelectorAll('.reveal-up, .reveal-fade, .step-card, .lic-card, .school-card').forEach(el => revealObserver.observe(el));
+})();
+
+// ADMIN KEYBOARD SHORTCUT
+document.addEventListener('keydown', e => {
+  if(e.ctrlKey && e.shiftKey && e.key === 'X'){
+    e.preventDefault();
+    const panel = document.getElementById('admin-panel');
+    const gate  = document.getElementById('admin-gate');
+    if(panel.classList.contains('show')){
+      // Panel is open — log out
+      adminLogout();
+    } else if(gate.classList.contains('show')){
+      // Gate is open — close it
+      closeAdminGate();
+    } else if(adminToken){
+      // Token exists from previous session — skip gate, go straight in
+      panel.classList.add('show');
+      setStatus(true);
+      loadDashboardStats();
+      loadSchoolsTable();
+      loadLeadsTable();
+      loadApprovalsPanel();
+      loadContentFields();
+      loadFullLogs();
+    } else {
+      // No token — show the login gate
+      openAdminGate();
+    }
+  }
+});
+
+// TRIPLE-CLICK LOGO → ADMIN GATE
+(function(){
+  let clicks = 0, timer = null;
+  const logo = document.getElementById('navLogo');
+  if(!logo) return;
+  logo.addEventListener('click', () => {
+    clicks++;
+    if(clicks === 1) timer = setTimeout(() => { clicks = 0; }, 600);
+    if(clicks >= 3){
+      clearTimeout(timer);
+      clicks = 0;
+      const panel = document.getElementById('admin-panel');
+      if(panel.classList.contains('show')){
+        adminLogout();
+      } else if(adminToken){
+        panel.classList.add('show');
+        setStatus(true);
+        loadDashboardStats(); loadSchoolsTable();
+        loadLeadsTable(); loadApprovalsPanel();
+        loadContentFields(); loadFullLogs();
+      } else {
+        openAdminGate();
+      }
+    }
+  });
+})();
+
+// HAMBURGER MENU
+(function(){
+  const toggle = document.getElementById('navToggle');
+  const nav    = document.getElementById('mainNav');
+  if(!toggle || !nav) return;
+  toggle.addEventListener('click', () => {
+    const open = nav.classList.toggle('nav-mobile-open');
+    toggle.classList.toggle('active', open);
+  });
+  // Close when a nav link is clicked
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    a.addEventListener('click', () => {
+      nav.classList.remove('nav-mobile-open');
+      toggle.classList.remove('active');
+    });
+  });
+  // Close when clicking outside
+  document.addEventListener('click', e => {
+    if(!nav.contains(e.target)){
+      nav.classList.remove('nav-mobile-open');
+      toggle.classList.remove('active');
+    }
+  });
+})();
+
+// INIT ON LOAD
+window.addEventListener('load', async () => {
+  // Health check
+  const health = await apiFetch('/api/health').catch(() => null);
+  setStatus(health?.ok === true);
+
+  // Load public-facing content from API
+  await loadSchoolsTable();
+  await loadTestimonials();
+
+  // Load content and apply to page
+  const contentR = await apiFetch('/api/content').catch(() => null);
+  if (contentR?.ok) applyContentToPage(contentR.data.data);
+
+  // If token is in session, quietly re-auth and load admin
+  if (adminToken) {
+    const verify = await apiFetch('/api/auth/verify', { headers: authHeaders() }).catch(() => null);
+    if (verify?.ok) {
+      setStatus(true);
+      // Pre-load admin data silently
+      loadDashboardStats();
+      loadLeadsTable();
+    } else {
+      adminToken = null;
+      sessionStorage.removeItem('suae_token');
+    }
+  }
+
+  const initTimeEl = document.getElementById('initTime');
+  if (initTimeEl) initTimeEl.textContent = new Date().toLocaleTimeString();
+});
+</script>
+</body>
