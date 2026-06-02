@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Allow server-side require() of Node built-ins in route handlers
-  serverExternalPackages: ['bcryptjs', 'jsonwebtoken', 'nodemailer'],
+  serverExternalPackages: ['bcryptjs', 'jsonwebtoken', 'nodemailer', 'pg'],
 };
-
 module.exports = nextConfig;

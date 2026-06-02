@@ -60,5 +60,51 @@
     "meta": {},
     "createdAt": "2026-05-15T09:43:33.364Z",
     "updatedAt": "2026-05-15T09:43:33.364Z"
+  },
+  {
+    "_id": "d79c79ac-575d-42a3-bbb7-527a5eef606d",
+    "type": "lead",
+    "action": "lead.submitted",
+    "message": "New lead: jayassss — Light Truck",
+    "meta": {
+      "leadId": "ff3a3f0e-80db-4ef0-b647-fd9f8ff91a8c",
+      "email": "tttheunseen@gmail.com",
+      "licenseType": "Light Truck"
+    },
+    "createdAt": "2026-05-22T12:43:56.835Z",
+    "updatedAt": "2026-05-22T12:43:56.835Z"
+  },
+  {
+    "_id": "bb96345f-effa-48d7-8b69-2a26e19b1c84",
+    "type": "admin",
+    "action": "auth.login",
+    "message": "Admin logged in from ::1",
+    "meta": {
+      "ip": "::1"
+    },
+    "createdAt": "2026-05-22T12:44:31.601Z",
+    "updatedAt": "2026-05-22T12:44:31.601Z"
+  },
+  {
+    "_id": "e01e310b-b5da-4c65-a37c-61aed4ccc67c",
+    "type": "admin",
+    "action": "lead.deleted",
+    "message": "Lead jaya deleted",
+    "meta": {
+      "leadId": "a22edc55-a50f-4937-82cc-44ffa32a90f8"
+    },
+    "createdAt": "2026-05-22T12:44:52.676Z",
+    "updatedAt": "2026-05-22T12:44:52.676Z"
+  },
+  {
+    "_id": "0ca2e689-f0e8-4e74-9e67-7c5fce5775a3",
+    "type": "admin",
+    "action": "lead.deleted",
+    "message": "Lead jayassss deleted",
+    "meta": {
+      "leadId": "ff3a3f0e-80db-4ef0-b647-fd9f8ff91a8c"
+    },
+    "createdAt": "2026-05-22T12:44:52.677Z",
+    "updatedAt": "2026-05-22T12:44:52.677Z"
   }
 ]

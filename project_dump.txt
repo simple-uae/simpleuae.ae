@@ -1,0 +1,4147 @@
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\ai\filter\run\route.js =====
+import { NextResponse } from 'next/server';
+const { requireAdmin } = require('@/lib/auth');
+const logger = require('@/lib/logger');
+
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { mode, minRating } = await request.json();
+    await logger.log('ai', 'ai.filter.run', `Filter AI triggered: mode=${mode}, minRating=${minRating}`);
+    const passed = 0, removed = 0;
+    return NextResponse.json({ success: true, hook: 'filter', mode, minRating, passed, removed });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\ai\filter\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+const logger = require('@/lib/logger');
+
+const Lead = model('Lead');
+
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { leadId } = await request.json();
+    if (!leadId) return NextResponse.json({ success: false, message: 'leadId required' }, { status: 400 });
+    const lead = await Lead.findById(leadId);
+    if (!lead) return NextResponse.json({ success: false, message: 'Lead not found' }, { status: 404 });
+    const aiResult = { score: null, label: null, reason: 'AI filtration not yet connected' };
+    await Lead.findByIdAndUpdate(leadId, { aiScore: aiResult.score, aiLabel: aiResult.label, aiReason: aiResult.reason });
+    await logger.log('ai', 'ai.filter', `Lead scoring hook called for ${leadId}`);
+    return NextResponse.json({ success: true, hook: 'filtration', result: aiResult });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\ai\pipeline\run\route.js =====
+import { NextResponse } from 'next/server';
+const { requireAdmin } = require('@/lib/auth');
+const logger = require('@/lib/logger');
+
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { autoPublish } = await request.json();
+    await logger.log('ai', 'ai.pipeline', `Full pipeline triggered, autoPublish=${autoPublish}`);
+    const published = false;
+    return NextResponse.json({ success: true, hook: 'pipeline', published });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\ai\recommend\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+
+const Lead   = model('Lead');
+const School = model('School');
+
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { leadId, topN = 3 } = await request.json();
+    if (!leadId) return NextResponse.json({ success: false, message: 'leadId required' }, { status: 400 });
+    const lead = await Lead.findById(leadId);
+    if (!lead) return NextResponse.json({ success: false, message: 'Lead not found' }, { status: 404 });
+
+    const filter = { status: 'live' };
+    if (lead.emirates?.length) filter.emirate = { $in: lead.emirates };
+    if (lead.licenseType)      filter.tags    = { $in: [lead.licenseType] };
+    const schools = await School.find(filter).sort({ rating: -1 }).limit(parseInt(topN)).lean();
+
+    return NextResponse.json({ success: true, hook: 'recommend', leadId, recommendations: schools });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\ai\scout\run\route.js =====
+import { NextResponse } from 'next/server';
+const { requireAdmin } = require('@/lib/auth');
+const logger = require('@/lib/logger');
+
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { task, emirate } = await request.json();
+    await logger.log('ai', 'ai.scout', `Scout AI triggered: "${task}" / ${emirate}`);
+    const results = [];
+    return NextResponse.json({ success: true, hook: 'searcher', task, emirate, results });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\ai\search\route.js =====
+import { NextResponse } from 'next/server';
+const logger = require('@/lib/logger');
+
+export async function POST(request) {
+  try {
+    const { query } = await request.json();
+    if (!query) return NextResponse.json({ success: false, message: 'query required' }, { status: 400 });
+    const results = [];
+    await logger.log('ai', 'ai.search', `Searcher hook: "${query}"`);
+    return NextResponse.json({ success: true, hook: 'searcher', query, results });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\analytics\dashboard\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+
+const Lead      = model('Lead');
+const School    = model('School');
+const Log       = model('Log');
+const Analytics = model('Analytics');
+
+export async function GET(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const [totalLeads, newLeads, liveSchoolCount, recentLogs] = await Promise.all([
+      Lead.countDocuments(),
+      Lead.countDocuments({ status: 'new' }),
+      School.countDocuments({ status: 'live' }),
+      Log.find({}).sort({ createdAt: -1 }).limit(20).lean(),
+    ]);
+
+    const converted = await Lead.countDocuments({ status: 'converted' });
+    const convRate  = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) : 0;
+
+    const today  = new Date().toISOString().slice(0, 10);
+    const todayA = await Analytics.findOne({ date: today });
+    const pageViewsToday = todayA?.pageViews || 0;
+
+    const allLeads  = await Lead.find({}).lean();
+    const byLicense = {};
+    const byEmirate = {};
+    const byStatus  = {};
+    allLeads.forEach(l => {
+      byLicense[l.licenseType] = (byLicense[l.licenseType] || 0) + 1;
+      (l.emirates || []).forEach(e => { byEmirate[e] = (byEmirate[e] || 0) + 1; });
+      byStatus[l.status] = (byStatus[l.status] || 0) + 1;
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        totalLeads, newLeads, converted, convRate,
+        liveSchools: liveSchoolCount, pageViewsToday,
+        byLicense, byEmirate, byStatus,
+        recentActivity: recentLogs,
+      },
+    });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\analytics\pageview\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+
+const Analytics = model('Analytics');
+
+export async function POST(request) {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    await Analytics.findOneAndUpdate({ date: today }, { $inc: { pageViews: 1 } }, { upsert: true });
+  } catch (e) {}
+  return NextResponse.json({ success: true });
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\analytics\track\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+
+const Analytics = model('Analytics');
+
+export async function POST(request) {
+  try {
+    const { page, event } = await request.json();
+    const today = new Date().toISOString().slice(0, 10);
+    const inc   = { pageViews: 1 };
+    if (event === 'comparison') inc.comparisons = 1;
+    await Analytics.findOneAndUpdate({ date: today }, { $inc: inc }, { upsert: true });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\analytics\trends\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+
+const Analytics = model('Analytics');
+
+export async function GET(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { searchParams } = new URL(request.url);
+    const days = parseInt(searchParams.get('days') || '30');
+    const rows = await Analytics.find({}).sort({ date: 1 }).lean();
+
+    const map = {};
+    rows.forEach(r => { map[r.date] = r; });
+
+    const result = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      result.push({
+        date:        key,
+        pageViews:   map[key]?.pageViews   || 0,
+        comparisons: map[key]?.comparisons || 0,
+        leads:       map[key]?.leads       || 0,
+      });
+    }
+
+    return NextResponse.json({ success: true, data: result });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\analytics\views\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+
+const Analytics = model('Analytics');
+
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const days = parseInt(searchParams.get('days') || '30');
+    const rows = await Analytics.find({}).sort({ date: 1 }).lean();
+    const totalViews = rows.reduce((sum, r) => sum + (r.pageViews || 0), 0);
+    const totalLeads = rows.reduce((sum, r) => sum + (r.leads || 0), 0);
+    return NextResponse.json({ success: true, totalViews, totalLeads, days });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\auth\key\route.js =====
+import { NextResponse } from 'next/server';
+const bcrypt = require('bcryptjs');
+const { requireAdmin } = require('@/lib/auth');
+const { model } = require('@/lib/jsondb');
+const logger = require('@/lib/logger');
+
+const Settings = model('Settings');
+
+export async function PUT(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { newKey } = await request.json();
+    if (!newKey || newKey.length < 8) {
+      return NextResponse.json({ success: false, message: 'Key must be at least 8 characters' }, { status: 400 });
+    }
+    const hash = await bcrypt.hash(newKey, 10);
+    await Settings.findOneAndUpdate(
+      { key: 'admin_key_hash' },
+      { key: 'admin_key_hash', value: hash, sensitive: true },
+      { upsert: true }
+    );
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    await logger.log('admin', 'auth.key_changed', 'Admin key updated', { ip });
+    return NextResponse.json({ success: true, message: 'Admin key updated. New key is active immediately.' });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\auth\login\route.js =====
+import { NextResponse } from 'next/server';
+const bcrypt   = require('bcryptjs');
+const jwt      = require('jsonwebtoken');
+const { model } = require('@/lib/jsondb');
+const logger   = require('@/lib/logger');
+
+const Settings = model('Settings');
+
+// Simple in-memory rate limiter for auth (max 20 per 15min per IP)
+const authAttempts = new Map();
+
+function checkAuthRateLimit(ip) {
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  const max = parseInt(process.env.AUTH_RATE_LIMIT_MAX || '20');
+  const entry = authAttempts.get(ip) || { count: 0, start: now };
+  if (now - entry.start > windowMs) {
+    authAttempts.set(ip, { count: 1, start: now });
+    return false;
+  }
+  if (entry.count >= max) return true;
+  entry.count++;
+  authAttempts.set(ip, entry);
+  return false;
+}
+
+export async function POST(request) {
+  try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    if (checkAuthRateLimit(ip)) {
+      return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
+    }
+
+    const { key } = await request.json();
+    if (!key) return NextResponse.json({ success: false, message: 'Admin key required' }, { status: 400 });
+
+    const storedSetting = await Settings.findOne({ key: 'admin_key_hash' });
+    const storedHash    = storedSetting?.value || process.env.ADMIN_KEY_HASH;
+
+    let valid = false;
+    if (storedHash && storedHash !== '$2a$10$CHANGEME_USE_bcryptjs_hash_of_your_real_key') {
+      valid = await bcrypt.compare(key, storedHash);
+    } else {
+      const plainKey = process.env.ADMIN_PLAIN_KEY || 'SIMPLEAE2025';
+      valid = (key === plainKey);
+    }
+
+    if (!valid) {
+      await logger.log('admin', 'auth.failed', `Failed login attempt from ${ip}`, { ip });
+      return NextResponse.json({ success: false, message: 'Invalid admin key' }, { status: 401 });
+    }
+
+    const token = jwt.sign(
+      { isAdmin: true, ip },
+      process.env.JWT_SECRET || 'fallback_secret_change_me',
+      { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+    );
+
+    await logger.log('admin', 'auth.login', `Admin logged in from ${ip}`, { ip });
+    return NextResponse.json({ success: true, token });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\auth\logout\route.js =====
+import { NextResponse } from 'next/server';
+const { requireAdmin } = require('@/lib/auth');
+const logger = require('@/lib/logger');
+
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    await logger.log('admin', 'auth.logout', `Admin logged out from ${ip}`, { ip });
+    return NextResponse.json({ success: true, message: 'Logged out' });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\auth\verify\route.js =====
+import { NextResponse } from 'next/server';
+const { verifyToken } = require('@/lib/auth');
+
+export async function GET(request) {
+  const admin = verifyToken(request);
+  if (!admin) {
+    return NextResponse.json({ success: false, message: 'Invalid or expired token' }, { status: 401 });
+  }
+  return NextResponse.json({ success: true, message: 'Token valid', admin });
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\content\[section]\route.js =====
+Get-Content : An object at the specified path 
+C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\content\[section]\route.js does not exist, or has 
+been filtered by the -Include or -Exclude parameter.
+At line:1 char:199
++ ... ct { '===== ' + $_.FullName + ' ====='; Get-Content $_.FullName; '' }
++                                             ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (System.String[]:String[]) [Get-Content], Exception
+    + FullyQualifiedErrorId : ItemNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+ 
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\content\route.js =====
+import { NextResponse } from 'next/server';
+const { readAll, writeAll } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+const logger = require('@/lib/logger');
+
+const COLLECTION = 'content';
+
+function getAll() {
+  const rows = readAll(COLLECTION);
+  return rows.reduce((acc, row) => { acc[row.key] = row.value; return acc; }, {});
+}
+
+const DEFAULTS = {
+  hero: {
+    line1:    'Find Your UAE',
+    line2:    'Driving School.',
+    line3:    'Compare & Save.',
+    subtitle: 'Compare every RTA-approved driving school across all 7 emirates ƒ?" prices, ratings, and packages in one place.',
+    ctaText:  'Get My Free Comparison',
+  },
+  footer: {
+    tagline:   'Your trusted guide to UAE driving schools.',
+    copyright: `Ac ${new Date().getFullYear()} SimpleUAE. All rights reserved.`,
+  },
+  stats: {
+    schools:  { number: '12+',  label: 'Approved Schools' },
+    licences: { number: '5',    label: 'License Types' },
+    emirates: { number: '7',    label: 'Emirates Covered' },
+    savings:  { number: 'Free', label: 'Comparison Service' },
+  },
+  testimonials: [
+    { name: 'Sarah M.', role: 'Car License Aú Dubai',     quote: 'SimpleUAE saved me hours of research. I found a school 30% cheaper than what I was quoted elsewhere!' },
+    { name: 'Ahmed K.', role: 'Heavy Truck Aú Abu Dhabi', quote: 'As a professional driver, finding the right truck license school was crucial. SimpleUAE made it effortless.' },
+    { name: 'Priya L.', role: 'Car License Aú Sharjah',   quote: 'The comparison tool is brilliant. I could see exactly what each school offered and chose the best value.' },
+  ],
+  packages: [
+    { name: 'Standard Car License',   category: 'Car License',    price: 'AED 4,200', duration: '30ƒ?"45 days', includes: 'Theory classes, Parking test, Road test, RTA registration' },
+    { name: 'Motorcycle Course',       category: 'Motorcycle',     price: 'AED 2,800', duration: '20ƒ?"30 days', includes: 'Theory, Balance & control, Road riding, RTA test' },
+    { name: 'Heavy Truck Program',     category: 'Heavy Truck',    price: 'AED 6,500', duration: '45ƒ?"60 days', includes: 'Theory, Practical driving, Vehicle pre-check, RTA HGV test' },
+    { name: 'Forklift Certification',  category: 'Forklift',       price: 'AED 1,500', duration: '5ƒ?"7 days',   includes: 'Safety briefing, Practical operation, CICB certification' },
+  ],
+};
+
+export async function GET(request) {
+  try {
+    const stored = getAll();
+    const data = {};
+    for (const [section, def] of Object.entries(DEFAULTS)) {
+      data[section] = stored[section] !== undefined ? stored[section] : def;
+    }
+    return NextResponse.json({ success: true, data });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\email\blast\route.js =====
+import { NextResponse } from 'next/server';
+const nodemailer = require('nodemailer');
+const { readAll, writeAll, model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+const logger = require('@/lib/logger');
+
+
+const Lead = model('Lead');
+
+function getSmtpConfig() {
+  const rows = readAll('settings');
+  const cfg  = {};
+  const keys = ['smtp_host','smtp_port','smtp_secure','smtp_user','smtp_pass','smtp_from_name','smtp_admin_email'];
+  rows.forEach(r => { if (keys.includes(r.key)) cfg[r.key] = r.value; });
+  return cfg;
+}
+
+function buildTransporter(cfg) {
+  const host   = cfg.smtp_host   || process.env.SMTP_HOST;
+  const port   = parseInt(cfg.smtp_port || process.env.SMTP_PORT || '587');
+  const secure = (cfg.smtp_secure || process.env.SMTP_SECURE) === 'true';
+  const user   = cfg.smtp_user   || process.env.SMTP_USER;
+  const pass   = cfg.smtp_pass   || process.env.SMTP_PASS;
+  if (!host || !user || !pass) throw new Error('SMTP not configured.');
+  return nodemailer.createTransport({ host, port, secure, auth: { user, pass }, tls: { rejectUnauthorized: false } });
+}
+
+function buildFromAddress(cfg) {
+  const name  = cfg.smtp_from_name || process.env.SMTP_FROM_NAME || 'SimpleUAE';
+  const email = cfg.smtp_user       || process.env.SMTP_USER       || 'noreply@simpleuae.com';
+  return `${name} <${email}>`;
+}
+
+function logEmail(entry) {
+  const rows = readAll('emaillog');
+  rows.unshift({ _id: crypto.randomUUID(), ...entry, createdAt: new Date().toISOString() });
+  writeAll('emaillog', rows.slice(0, 500));
+}
+
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { subject, body, status = 'new' } = await request.json();
+    if (!subject || !body) {
+      return NextResponse.json({ success: false, message: 'subject and body required' }, { status: 400 });
+    }
+
+    const cfg         = getSmtpConfig();
+    const transporter = buildTransporter(cfg);
+    const from        = buildFromAddress(cfg);
+
+    const filter = status === 'all' ? {} : { status };
+    const leads  = await Lead.find(filter).lean();
+
+    if (!leads.length) {
+      return NextResponse.json({ success: true, count: 0, message: 'No matching leads found' });
+    }
+
+    let sentCount = 0;
+    const errors  = [];
+
+    for (const lead of leads) {
+      const personalBody = body
+        .replace(/{name}/gi,    lead.fullName  || 'there')
+        .replace(/{license}/gi, lead.licenseType || '')
+        .replace(/{emirate}/gi, (lead.emirates || []).join(', ') || 'UAE');
+
+      const html = `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+          ${personalBody.replace(/\n/g, '<br>')}
+          <hr style="margin:32px 0;border:none;border-top:1px solid #eee;">
+          <p style="color:#999;font-size:12px;">SimpleUAE Aú UAE Driving School Comparison</p>
+        </div>
+      `;
+
+      try {
+        await transporter.sendMail({ from, to: lead.email, subject, html, text: personalBody });
+        logEmail({ to: lead.email, subject, type: 'blast', status: 'sent', leadId: lead._id });
+        sentCount++;
+      } catch (e) {
+        errors.push({ email: lead.email, error: e.message });
+        logEmail({ to: lead.email, subject, type: 'blast', status: 'failed', error: e.message });
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    await logger.log('admin', 'email.blast', `Blast sent to ${sentCount}/${leads.length} leads`, { subject, errors: errors.length });
+    return NextResponse.json({ success: true, count: sentCount, total: leads.length, errors });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\email\log\route.js =====
+import { NextResponse } from 'next/server';
+const { readAll } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+
+export async function GET(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '100');
+    const rows  = readAll('emaillog').slice(0, limit);
+    return NextResponse.json({ success: true, data: rows });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\email\send\route.js =====
+import { NextResponse } from 'next/server';
+const nodemailer = require('nodemailer');
+const { readAll, writeAll } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+const logger = require('@/lib/logger');
+
+
+function getSmtpConfig() {
+  const rows = readAll('settings');
+  const cfg  = {};
+  const keys = ['smtp_host','smtp_port','smtp_secure','smtp_user','smtp_pass','smtp_from_name','smtp_admin_email'];
+  rows.forEach(r => { if (keys.includes(r.key)) cfg[r.key] = r.value; });
+  return cfg;
+}
+
+function buildTransporter(cfg) {
+  const host   = cfg.smtp_host   || process.env.SMTP_HOST;
+  const port   = parseInt(cfg.smtp_port || process.env.SMTP_PORT || '587');
+  const secure = (cfg.smtp_secure || process.env.SMTP_SECURE) === 'true';
+  const user   = cfg.smtp_user   || process.env.SMTP_USER;
+  const pass   = cfg.smtp_pass   || process.env.SMTP_PASS;
+  if (!host || !user || !pass) {
+    throw new Error('SMTP not configured.');
+  }
+  return nodemailer.createTransport({ host, port, secure, auth: { user, pass }, tls: { rejectUnauthorized: false } });
+}
+
+function buildFromAddress(cfg) {
+  const name  = cfg.smtp_from_name || process.env.SMTP_FROM_NAME || 'SimpleUAE';
+  const email = cfg.smtp_user       || process.env.SMTP_USER       || 'noreply@simpleuae.com';
+  return `${name} <${email}>`;
+}
+
+function logEmail(entry) {
+  const rows = readAll('emaillog');
+  rows.unshift({ _id: crypto.randomUUID(), ...entry, createdAt: new Date().toISOString() });
+  writeAll('emaillog', rows.slice(0, 500));
+}
+
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { to, subject, body } = await request.json();
+    if (!to || !subject || !body) {
+      return NextResponse.json({ success: false, message: 'to, subject and body required' }, { status: 400 });
+    }
+
+    const cfg         = getSmtpConfig();
+    const transporter = buildTransporter(cfg);
+    const html = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+        ${body.replace(/\n/g, '<br>')}
+        <hr style="margin:32px 0;border:none;border-top:1px solid #eee;">
+        <p style="color:#999;font-size:12px;">
+          Sent via SimpleUAE Admin Panel Aú <a href="https://simpleuae.com" style="color:#B8844A;">simpleuae.com</a>
+        </p>
+      </div>
+    `;
+
+    await transporter.sendMail({ from: buildFromAddress(cfg), to, subject, html, text: body });
+    logEmail({ to, subject, type: 'manual', status: 'sent' });
+    await logger.log('admin', 'email.sent', `Manual email sent to ${to}`, { subject });
+    return NextResponse.json({ success: true, message: `Email sent to ${to}` });
+  } catch (err) {
+    logEmail({ to: null, subject: null, type: 'manual', status: 'failed', error: err.message });
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\email\smtp\route.js =====
+import { NextResponse } from 'next/server';
+const nodemailer = require('nodemailer');
+const { readAll, writeAll } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+const logger = require('@/lib/logger');
+
+function getSmtpConfig() {
+  const rows = readAll('settings');
+  const cfg  = {};
+  const keys = ['smtp_host','smtp_port','smtp_secure','smtp_user','smtp_pass','smtp_from_name','smtp_admin_email'];
+  rows.forEach(r => { if (keys.includes(r.key)) cfg[r.key] = r.value; });
+  return cfg;
+}
+
+function saveToSettings(obj) {
+  const rows = readAll('settings');
+  for (const [key, value] of Object.entries(obj)) {
+    const idx = rows.findIndex(r => r.key === key);
+    if (idx >= 0) rows[idx].value = value;
+    else rows.push({ key, value });
+  }
+  writeAll('settings', rows);
+}
+
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const body = await request.json();
+    const { smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, smtp_from_name, smtp_admin_email } = body;
+    const toSave = {};
+    if (smtp_host        !== undefined) toSave.smtp_host         = smtp_host;
+    if (smtp_port        !== undefined) toSave.smtp_port         = smtp_port;
+    if (smtp_secure      !== undefined) toSave.smtp_secure       = smtp_secure;
+    if (smtp_user        !== undefined) toSave.smtp_user         = smtp_user;
+    if (smtp_from_name   !== undefined) toSave.smtp_from_name    = smtp_from_name;
+    if (smtp_admin_email !== undefined) toSave.smtp_admin_email  = smtp_admin_email;
+    if (smtp_pass && smtp_pass.trim())  toSave.smtp_pass         = smtp_pass;
+
+    saveToSettings(toSave);
+    await logger.log('admin', 'email.smtp_saved', `SMTP config updated: ${smtp_host}`);
+    return NextResponse.json({ success: true, message: 'SMTP settings saved' });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+export async function GET(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const cfg = getSmtpConfig();
+    delete cfg.smtp_pass;
+    return NextResponse.json({ success: true, data: cfg });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\email\test\route.js =====
+import { NextResponse } from 'next/server';
+const nodemailer = require('nodemailer');
+const { readAll, writeAll } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+const logger = require('@/lib/logger');
+
+
+function getSmtpConfig() {
+  const rows = readAll('settings');
+  const cfg  = {};
+  const keys = ['smtp_host','smtp_port','smtp_secure','smtp_user','smtp_pass','smtp_from_name','smtp_admin_email'];
+  rows.forEach(r => { if (keys.includes(r.key)) cfg[r.key] = r.value; });
+  return cfg;
+}
+
+function buildTransporter(cfg) {
+  const host   = cfg.smtp_host   || process.env.SMTP_HOST;
+  const port   = parseInt(cfg.smtp_port || process.env.SMTP_PORT || '587');
+  const secure = (cfg.smtp_secure || process.env.SMTP_SECURE) === 'true';
+  const user   = cfg.smtp_user   || process.env.SMTP_USER;
+  const pass   = cfg.smtp_pass   || process.env.SMTP_PASS;
+  if (!host || !user || !pass) {
+    throw new Error('SMTP not configured. Go to Email panel ƒ+' SMTP Configuration and fill in your credentials.');
+  }
+  return nodemailer.createTransport({
+    host, port, secure,
+    auth: { user, pass },
+    tls: { rejectUnauthorized: false },
+  });
+}
+
+function buildFromAddress(cfg) {
+  const name  = cfg.smtp_from_name || process.env.SMTP_FROM_NAME || 'SimpleUAE';
+  const email = cfg.smtp_user       || process.env.SMTP_USER       || 'noreply@simpleuae.com';
+  return `${name} <${email}>`;
+}
+
+function logEmail(entry) {
+  const rows = readAll('emaillog');
+  rows.unshift({ _id: crypto.randomUUID(), ...entry, createdAt: new Date().toISOString() });
+  writeAll('emaillog', rows.slice(0, 500));
+}
+
+export { getSmtpConfig, buildTransporter, buildFromAddress, logEmail };
+
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { to } = await request.json();
+    if (!to) return NextResponse.json({ success: false, message: 'Recipient email required' }, { status: 400 });
+
+    const cfg         = getSmtpConfig();
+    const transporter = buildTransporter(cfg);
+
+    await transporter.sendMail({
+      from:    buildFromAddress(cfg),
+      to,
+      subject: 'SimpleUAE ƒ?" SMTP Test Email ƒo"',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+          <h2 style="color:#B8844A;">SimpleUAE Admin Panel</h2>
+          <p>This is a test email confirming your SMTP configuration is working correctly.</p>
+          <table style="border-collapse:collapse;width:100%;margin:16px 0;">
+            <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold;">SMTP Host</td><td style="padding:8px;">${cfg.smtp_host}</td></tr>
+            <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold;">Port</td><td style="padding:8px;">${cfg.smtp_port}</td></tr>
+            <tr><td style="padding:8px;background:#f5f5f5;font-weight:bold;">Sent At</td><td style="padding:8px;">${new Date().toLocaleString()}</td></tr>
+          </table>
+          <p style="color:#666;font-size:13px;">If you received this, your email system is fully operational.</p>
+        </div>
+      `,
+    });
+
+    logEmail({ to, subject: 'SimpleUAE ƒ?" SMTP Test Email ƒo"', type: 'test', status: 'sent' });
+    await logger.log('admin', 'email.test_sent', `Test email sent to ${to}`);
+    return NextResponse.json({ success: true, message: `Test email sent to ${to}` });
+  } catch (err) {
+    logEmail({ to: null, subject: 'Test', type: 'test', status: 'failed', error: err.message });
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\health\route.js =====
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  return NextResponse.json({
+    success: true,
+    status: 'ok',
+    db: 'json-file',
+    timestamp: new Date().toISOString(),
+  });
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\leads\count\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+
+const Lead = model('Lead');
+
+export async function GET(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const total     = await Lead.countDocuments();
+    const newLeads  = await Lead.countDocuments({ status: 'new' });
+    const contacted = await Lead.countDocuments({ status: 'contacted' });
+    const converted = await Lead.countDocuments({ status: 'converted' });
+    return NextResponse.json({ success: true, total, new: newLeads, contacted, converted });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\leads\export\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+
+const Lead = model('Lead');
+
+export async function GET(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const leads = await Lead.find({}).sort({ createdAt: -1 }).lean();
+    const header = 'ID,Name,Email,Phone,LicenseType,HomeCountryLicense,Emirates,Status,AdditionalInfo,SubmittedAt\n';
+    const rows = leads.map(l =>
+      [l._id, `"${l.fullName}"`, l.email, l.phone, l.licenseType,
+       l.homeCountryLicense, `"${(l.emirates||[]).join(';')}"`, l.status,
+       `"${(l.additionalInfo||'').replace(/"/g,'""')}"`, l.createdAt
+      ].join(',')
+    ).join('\n');
+
+    return new Response(header + rows, {
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': `attachment; filename="leads-${Date.now()}.csv"`,
+      },
+    });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\leads\[id]\route.js =====
+Get-Content : An object at the specified path 
+C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\leads\[id]\route.js does not exist, or has been 
+filtered by the -Include or -Exclude parameter.
+At line:1 char:199
++ ... ct { '===== ' + $_.FullName + ' ====='; Get-Content $_.FullName; '' }
++                                             ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (System.String[]:String[]) [Get-Content], Exception
+    + FullyQualifiedErrorId : ItemNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+ 
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\leads\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+const mailer = require('@/lib/mailer');
+const logger = require('@/lib/logger');
+
+const Lead      = model('Lead');
+const Analytics = model('Analytics');
+
+// Simple in-memory lead rate limiter (10 per hour per IP)
+const leadAttempts = new Map();
+function checkLeadRateLimit(ip) {
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000;
+  const entry = leadAttempts.get(ip) || { count: 0, start: now };
+  if (now - entry.start > windowMs) {
+    leadAttempts.set(ip, { count: 1, start: now });
+    return false;
+  }
+  if (entry.count >= 10) return true;
+  entry.count++;
+  leadAttempts.set(ip, entry);
+  return false;
+}
+
+export async function POST(request) {
+  try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    if (checkLeadRateLimit(ip)) {
+      return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
+    }
+
+    const body = await request.json();
+    const {
+      fullName, email, phone,
+      licenseType, homeCountryLicense, priorExperience,
+      emirates, additionalInfo, consent,
+      engineSize, bikePurpose, busUse, busOp,
+      truckCargo, hgvType, hgvPurpose,
+      forkliftType, forkliftIndustry,
+      equipType, equipProject,
+    } = body;
+
+    if (!fullName || !email || !phone || !licenseType || !homeCountryLicense) {
+      return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
+    }
+    if (consent !== 'true' && consent !== true) {
+      return NextResponse.json({ success: false, message: 'Consent required' }, { status: 400 });
+    }
+
+    const lead = await Lead.create({
+      fullName: fullName.trim(),
+      email:    email.trim().toLowerCase(),
+      phone:    phone.trim(),
+      licenseType,
+      homeCountryLicense,
+      priorExperience: priorExperience || 'N/A',
+      emirates: Array.isArray(emirates) ? emirates : (emirates ? [emirates] : []),
+      additionalInfo: additionalInfo || '',
+      consent: true,
+      status: 'new',
+      ipAddress: ip,
+      userAgent: request.headers.get('user-agent') || '',
+      referrer:  request.headers.get('referer')   || '',
+      source:    'comparison-form',
+      vehicleDetails: {
+        engineSize, bikePurpose, busUse, busOp,
+        truckCargo, hgvType, hgvPurpose,
+        forkliftType, forkliftIndustry,
+        equipType, equipProject,
+      },
+      aiScore: null, aiLabel: null, aiReason: null,
+    });
+
+    const today = new Date().toISOString().slice(0, 10);
+    await Analytics.findOneAndUpdate(
+      { date: today },
+      { $inc: { leads: 1 } },
+      { upsert: true }
+    ).catch(() => {});
+
+    mailer.sendLeadConfirmation(lead).catch(e => console.warn('Email error:', e.message));
+    mailer.sendAdminLeadAlert(lead).catch(e => console.warn('Admin email error:', e.message));
+
+    await logger.log('lead', 'lead.submitted', `New lead: ${fullName} ƒ?" ${licenseType}`, {
+      leadId: lead._id, email, licenseType,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Thank you ${fullName}! We'll send personalised recommendations to ${email} shortly.`,
+      leadId: lead._id,
+    }, { status: 201 });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+export async function GET(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { searchParams } = new URL(request.url);
+    const status      = searchParams.get('status');
+    const licenseType = searchParams.get('licenseType');
+    const emirate     = searchParams.get('emirate');
+    const search      = searchParams.get('search');
+    const page        = parseInt(searchParams.get('page') || '1');
+    const limit       = parseInt(searchParams.get('limit') || '50');
+
+    const filter = {};
+    if (status)      filter.status      = status;
+    if (licenseType) filter.licenseType = licenseType;
+    if (emirate)     filter.emirates    = emirate;
+    if (search) filter.$or = [
+      { fullName: { $regex: search, $options: 'i' } },
+      { email:    { $regex: search, $options: 'i' } },
+      { phone:    { $regex: search, $options: 'i' } },
+    ];
+
+    const allLeads = await Lead.find(filter).sort({ createdAt: -1 }).lean();
+    const total = allLeads.length;
+    const skip  = (page - 1) * limit;
+    const data  = allLeads.slice(skip, skip + limit);
+
+    return NextResponse.json({ success: true, total, page, data });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\logs\clear\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+
+const Log = model('Log');
+
+export async function DELETE(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    let body = {};
+    try { body = await request.json(); } catch {}
+    const olderThanDays = body?.olderThanDays || 0;
+    if (olderThanDays > 0) {
+      const cutoff = new Date(Date.now() - olderThanDays * 86400000).toISOString();
+      await Log.deleteMany({ createdAt: { $lt: cutoff } });
+    } else {
+      await Log.deleteMany({});
+    }
+    return NextResponse.json({ success: true, message: 'Logs cleared.' });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\logs\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+
+const Log = model('Log');
+
+export async function GET(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { searchParams } = new URL(request.url);
+    const type   = searchParams.get('type');
+    const action = searchParams.get('action');
+    const page   = parseInt(searchParams.get('page') || '1');
+    const limit  = parseInt(searchParams.get('limit') || '100');
+
+    const filter = {};
+    if (type)   filter.type   = type;
+    if (action) filter.action = { $regex: action, $options: 'i' };
+
+    const all  = await Log.find(filter).sort({ createdAt: -1 }).lean();
+    const skip = (page - 1) * limit;
+    const data = all.slice(skip, skip + limit);
+
+    return NextResponse.json({ success: true, total: all.length, data });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+async function clearHandler(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    let body = {};
+    try { body = await request.json(); } catch {}
+    const olderThanDays = body?.olderThanDays || 0;
+    if (olderThanDays > 0) {
+      const cutoff = new Date(Date.now() - olderThanDays * 86400000).toISOString();
+      await Log.deleteMany({ createdAt: { $lt: cutoff } });
+    } else {
+      await Log.deleteMany({});
+    }
+    return NextResponse.json({ success: true, message: 'Logs cleared.' });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+export { clearHandler as DELETE };
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\schools\count\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+
+const School = model('School');
+
+export async function GET(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const total   = await School.countDocuments();
+    const live    = await School.countDocuments({ status: 'live' });
+    const draft   = await School.countDocuments({ status: 'draft' });
+    const pending = await School.countDocuments({ status: 'pending' });
+    return NextResponse.json({ success: true, total, live, draft, pending });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\schools\[id]\status\route.js =====
+Get-Content : An object at the specified path 
+C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\schools\[id]\status\route.js does not exist, or 
+has been filtered by the -Include or -Exclude parameter.
+At line:1 char:199
++ ... ct { '===== ' + $_.FullName + ' ====='; Get-Content $_.FullName; '' }
++                                             ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (System.String[]:String[]) [Get-Content], Exception
+    + FullyQualifiedErrorId : ItemNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+ 
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\schools\[id]\route.js =====
+Get-Content : An object at the specified path 
+C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\schools\[id]\route.js does not exist, or has been 
+filtered by the -Include or -Exclude parameter.
+At line:1 char:199
++ ... ct { '===== ' + $_.FullName + ' ====='; Get-Content $_.FullName; '' }
++                                             ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (System.String[]:String[]) [Get-Content], Exception
+    + FullyQualifiedErrorId : ItemNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+ 
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\schools\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { verifyToken, requireAdmin } = require('@/lib/auth');
+const logger = require('@/lib/logger');
+const { seedSchools } = require('@/lib/seed');
+
+const School = model('School');
+
+// Auto-seed real UAE driving schools on first run (when database is empty)
+let seeded = false;
+async function ensureSeeded() {
+  if (seeded) return;
+  const count = await School.countDocuments();
+  if (count === 0) {
+    await seedSchools();
+    await logger.log('system', 'db.seeded', 'Database seeded with UAE driving schools on first launch');
+  }
+  seeded = true;
+}
+
+export async function GET(request) {
+  try {
+    await ensureSeeded();
+
+    const { searchParams } = new URL(request.url);
+    const emirate = searchParams.get('emirate');
+    const license = searchParams.get('license');
+    const status  = searchParams.get('status');
+    const search  = searchParams.get('search');
+    const sort    = searchParams.get('sort') || 'priceFrom';
+    const limit   = parseInt(searchParams.get('limit') || '50');
+
+    const isAdmin = !!(request.headers.get('authorization')?.startsWith('Bearer '));
+    const filter  = {};
+
+    if (!isAdmin) {
+      filter.status = 'live';
+    } else if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    if (emirate) filter.emirate = emirate;
+    if (license) filter.tags   = { $in: [license] };
+    if (search)  filter.$or = [
+      { name:     { $regex: search, $options: 'i' } },
+      { location: { $regex: search, $options: 'i' } },
+    ];
+
+    const sortMap = {
+      priceFrom: { priceFrom: 1 },
+      rating:    { rating: -1 },
+      name:      { name:  1 },
+      newest:    { createdAt: -1 },
+    };
+
+    const schools = await School
+      .find(filter)
+      .sort(sortMap[sort] || { priceFrom: 1 })
+      .limit(limit)
+      .lean();
+
+    return NextResponse.json({ success: true, count: schools.length, data: schools });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const body = await request.json();
+    const { name, code, emirate, priceFrom } = body;
+    if (!name || !code || !emirate || priceFrom == null) {
+      return NextResponse.json({ success: false, message: 'name, code, emirate and priceFrom are required' }, { status: 400 });
+    }
+    const school = await School.create(body);
+    await logger.log('admin', 'school.created', `School "${school.name}" created`, { schoolId: school._id });
+    return NextResponse.json({ success: true, data: school }, { status: 201 });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\settings\[key]\route.js =====
+Get-Content : An object at the specified path 
+C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\settings\[key]\route.js does not exist, or has 
+been filtered by the -Include or -Exclude parameter.
+At line:1 char:199
++ ... ct { '===== ' + $_.FullName + ' ====='; Get-Content $_.FullName; '' }
++                                             ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (System.String[]:String[]) [Get-Content], Exception
+    + FullyQualifiedErrorId : ItemNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+ 
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\settings\route.js =====
+import { NextResponse } from 'next/server';
+const { model } = require('@/lib/jsondb');
+const { requireAdmin } = require('@/lib/auth');
+
+const Settings = model('Settings');
+
+export async function GET(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const all  = await Settings.find({}).lean();
+    const safe = all
+      .filter(s => !s.sensitive)
+      .reduce((acc, s) => { acc[s.key] = s.value; return acc; }, {});
+    return NextResponse.json({ success: true, data: safe });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+// PUT ƒ?" bulk update { key: value, key: value }
+export async function PUT(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const updates = await request.json();
+    for (const [key, value] of Object.entries(updates)) {
+      if (key === 'admin_key_hash') continue;
+      await Settings.findOneAndUpdate({ key }, { key, value }, { upsert: true });
+    }
+    return NextResponse.json({ success: true, message: 'Settings saved' });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+// POST ƒ?" single { key, value } upsert (what frontend actually sends)
+export async function POST(request) {
+  const authErr = requireAdmin(request);
+  if (authErr) return authErr;
+  try {
+    const { key, value } = await request.json();
+    if (!key) return NextResponse.json({ success: false, message: 'key required' }, { status: 400 });
+    if (key === 'admin_key_hash') {
+      return NextResponse.json({ success: false, message: 'Use /api/auth/key to change admin key' }, { status: 403 });
+    }
+    await Settings.findOneAndUpdate({ key }, { key, value }, { upsert: true });
+    return NextResponse.json({ success: true, message: 'Setting saved' });
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\api\validate\email\route.js =====
+import { NextResponse } from 'next/server';
+const dns = require('dns').promises;
+
+const DISPOSABLE_DOMAINS = new Set([
+  'mailinator.com','guerrillamail.com','10minutemail.com','temp-mail.org',
+  'throwaway.email','yopmail.com','sharklasers.com','guerrillamailblock.com',
+  'grr.la','guerrillamail.info','guerrillamail.biz','guerrillamail.de',
+  'guerrillamail.net','guerrillamail.org','spam4.me','trashmail.com',
+  'trashmail.me','trashmail.net','fakeinbox.com','maildrop.cc',
+  'dispostable.com','mailnull.com','spamgourmet.com','spamgourmet.net',
+  'spamgourmet.org','spamex.com','mailexpire.com','mailfreeonline.com',
+  'spamevade.com','binkmail.com','bobmail.info','discard.email',
+  'discardmail.com','discardmail.de','spamspot.com','tempinbox.com',
+  'tempinbox.co.uk','filzmail.com','spamfree24.org',
+  'tempr.email','spamgob.com',
+]);
+
+function isValidFormat(email) {
+  const re = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+  return re.test(email);
+}
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    const raw  = (body.email || '').trim().toLowerCase();
+    const result = {
+      email:  raw,
+      valid:  false,
+      reason: '',
+      checks: { format: false, disposable: false, mxRecord: false },
+    };
+
+    if (!raw) {
+      result.reason = 'Email is required';
+      return NextResponse.json(result);
+    }
+
+    if (!isValidFormat(raw)) {
+      result.reason = 'Invalid email format';
+      return NextResponse.json(result);
+    }
+    result.checks.format = true;
+
+    const domain = raw.split('@')[1];
+    if (DISPOSABLE_DOMAINS.has(domain)) {
+      result.reason = 'Disposable/temporary email addresses are not accepted';
+      return NextResponse.json(result);
+    }
+    result.checks.disposable = true;
+
+    try {
+      const mxRecords = await dns.resolveMx(domain);
+      if (!mxRecords || mxRecords.length === 0) {
+        result.reason = 'Email domain does not accept email (no MX records)';
+        return NextResponse.json(result);
+      }
+      result.checks.mxRecord = true;
+    } catch {
+      result.reason = 'Email domain does not exist or cannot be reached';
+      return NextResponse.json(result);
+    }
+
+    result.valid  = true;
+    result.reason = 'Email looks valid';
+    return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\layout.js =====
+export const metadata = {
+  title: 'SimpleUAE',
+  description: 'UAE Driving School Comparison',
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\app\page.js =====
+import { redirect } from 'next/navigation';
+
+export default function Home() {
+  redirect('/index.html');
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\data\analyticss.json =====
+[
+  {
+    "_id": "055797a2-b1a2-4bc7-b142-4b26c3b712d0",
+    "date": "2026-05-15",
+    "createdAt": "2026-05-15T09:38:16.575Z",
+    "leads": 1,
+    "updatedAt": "2026-05-15T09:38:16.576Z"
+  },
+  {
+    "_id": "94490506-9803-44ae-92eb-f4da9fef35ac",
+    "date": "2026-05-22",
+    "createdAt": "2026-05-22T12:43:56.826Z",
+    "leads": 1,
+    "updatedAt": "2026-05-22T12:43:56.826Z"
+  }
+]
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\data\content.json =====
+[
+  {
+    "key": "testimonials",
+    "value": [
+      {
+        "name": "Sarah M.",
+        "role": "Car License Aú Dubai",
+        "quote": "PERFECTOOOO"
+      },
+      {
+        "name": "Ahmed K.",
+        "role": "Heavy Truck Aú Abu Dhabi",
+        "quote": "As a professional driver, finding the right truck license school was crucial. SimpleUAE made it effortless."
+      },
+      {
+        "name": "Priya L.",
+        "role": "Car License Aú Sharjah",
+        "quote": "The comparison tool is brilliant. I could see exactly what each school offered and chose the best value."
+      }
+    ]
+  }
+]
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\data\leads.json =====
+[]
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\data\logs.json =====
+[
+  {
+    "_id": "2f364c00-cc5d-44e2-8e19-21ca92ebf282",
+    "type": "system",
+    "action": "db.seeded",
+    "message": "Database seeded with UAE driving schools on first launch",
+    "meta": {},
+    "createdAt": "2026-05-15T09:37:47.731Z",
+    "updatedAt": "2026-05-15T09:37:47.731Z"
+  },
+  {
+    "_id": "1a11f334-37ac-4e9f-99b5-ea24126337b9",
+    "type": "lead",
+    "action": "lead.submitted",
+    "message": "New lead: jaya ƒ?" Forklift",
+    "meta": {
+      "leadId": "a22edc55-a50f-4937-82cc-44ffa32a90f8",
+      "email": "tttheunseen@gmail.com",
+      "licenseType": "Forklift"
+    },
+    "createdAt": "2026-05-15T09:38:16.635Z",
+    "updatedAt": "2026-05-15T09:38:16.635Z"
+  },
+  {
+    "_id": "fad302ed-dd45-4bce-97c6-af18e72dfe26",
+    "type": "admin",
+    "action": "auth.failed",
+    "message": "Failed login attempt from ::1",
+    "meta": {
+      "ip": "::1"
+    },
+    "createdAt": "2026-05-15T09:39:34.543Z",
+    "updatedAt": "2026-05-15T09:39:34.543Z"
+  },
+  {
+    "_id": "dc3074a9-b7a1-4fc0-8592-1ff4414188b0",
+    "type": "admin",
+    "action": "auth.login",
+    "message": "Admin logged in from ::1",
+    "meta": {
+      "ip": "::1"
+    },
+    "createdAt": "2026-05-15T09:39:41.864Z",
+    "updatedAt": "2026-05-15T09:39:41.864Z"
+  },
+  {
+    "_id": "5f47e46e-218a-4bdf-8c5e-bfa7c27f512d",
+    "type": "admin",
+    "action": "content.updated",
+    "message": "Content \"testimonials\" updated",
+    "meta": {},
+    "createdAt": "2026-05-15T09:42:37.866Z",
+    "updatedAt": "2026-05-15T09:42:37.866Z"
+  },
+  {
+    "_id": "9dcd5502-6a75-49bb-b789-bf68362d6ffe",
+    "type": "admin",
+    "action": "content.updated",
+    "message": "Content \"testimonials\" updated",
+    "meta": {},
+    "createdAt": "2026-05-15T09:43:33.364Z",
+    "updatedAt": "2026-05-15T09:43:33.364Z"
+  },
+  {
+    "_id": "d79c79ac-575d-42a3-bbb7-527a5eef606d",
+    "type": "lead",
+    "action": "lead.submitted",
+    "message": "New lead: jayassss ƒ?" Light Truck",
+    "meta": {
+      "leadId": "ff3a3f0e-80db-4ef0-b647-fd9f8ff91a8c",
+      "email": "tttheunseen@gmail.com",
+      "licenseType": "Light Truck"
+    },
+    "createdAt": "2026-05-22T12:43:56.835Z",
+    "updatedAt": "2026-05-22T12:43:56.835Z"
+  },
+  {
+    "_id": "bb96345f-effa-48d7-8b69-2a26e19b1c84",
+    "type": "admin",
+    "action": "auth.login",
+    "message": "Admin logged in from ::1",
+    "meta": {
+      "ip": "::1"
+    },
+    "createdAt": "2026-05-22T12:44:31.601Z",
+    "updatedAt": "2026-05-22T12:44:31.601Z"
+  },
+  {
+    "_id": "e01e310b-b5da-4c65-a37c-61aed4ccc67c",
+    "type": "admin",
+    "action": "lead.deleted",
+    "message": "Lead jaya deleted",
+    "meta": {
+      "leadId": "a22edc55-a50f-4937-82cc-44ffa32a90f8"
+    },
+    "createdAt": "2026-05-22T12:44:52.676Z",
+    "updatedAt": "2026-05-22T12:44:52.676Z"
+  },
+  {
+    "_id": "0ca2e689-f0e8-4e74-9e67-7c5fce5775a3",
+    "type": "admin",
+    "action": "lead.deleted",
+    "message": "Lead jayassss deleted",
+    "meta": {
+      "leadId": "ff3a3f0e-80db-4ef0-b647-fd9f8ff91a8c"
+    },
+    "createdAt": "2026-05-22T12:44:52.677Z",
+    "updatedAt": "2026-05-22T12:44:52.677Z"
+  }
+]
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\data\schools.json =====
+[
+  {
+    "_id": "7e4c9df6-ec24-4d07-ab7b-c5b840ee55f7",
+    "name": "Emirates Driving Institute",
+    "code": "E",
+    "emirate": "Dubai",
+    "location": "Dubai ƒ?" Al Quoz, Al Qusais, Jumeirah (53 branches)",
+    "priceFrom": 3765,
+    "rating": 4.7,
+    "reviews": "2,400+",
+    "tags": [
+      "Car",
+      "Motorcycle",
+      "Bus",
+      "Truck"
+    ],
+    "color": "#B8844A",
+    "status": "live",
+    "featured": true,
+    "website": "https://edi-uae.com",
+    "phone": "+971 4 263 1100",
+    "email": "info@edi-uae.com",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  },
+  {
+    "_id": "74298d4b-05ef-4f23-ae5c-74d39becc35f",
+    "name": "Galadari Motor Driving Centre",
+    "code": "G",
+    "emirate": "Dubai",
+    "location": "Dubai ƒ?" Al Qusais, Al Quoz, Dubai Mall (60+ branches)",
+    "priceFrom": 3880,
+    "rating": 4.4,
+    "reviews": "1,800+",
+    "tags": [
+      "Car",
+      "Truck",
+      "Forklift"
+    ],
+    "color": "#C4673A",
+    "status": "live",
+    "website": "https://www.gmdc.ae",
+    "phone": "+971 4 267 6166",
+    "email": "info@gmdc.ae",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  },
+  {
+    "_id": "a8385ea0-b4c0-4f75-ab4a-9d2e11cc4cfc",
+    "name": "Belhasa Driving Center",
+    "code": "B",
+    "emirate": "Dubai",
+    "location": "Dubai ƒ?" Al Wasl, Al Quoz, Jebel Ali, Marina (15+ branches)",
+    "priceFrom": 3675,
+    "rating": 4.6,
+    "reviews": "3,100+",
+    "tags": [
+      "Car",
+      "Motorcycle",
+      "VIP",
+      "Heavy"
+    ],
+    "color": "#4A3728",
+    "status": "live",
+    "featured": true,
+    "website": "https://www.bdc.ae",
+    "phone": "+971 4 509 1200",
+    "email": "info@bdc.ae",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  },
+  {
+    "_id": "183e5a14-ab24-4927-8439-f8df02c355df",
+    "name": "Dubai Driving Center",
+    "code": "D",
+    "emirate": "Dubai",
+    "location": "Dubai ƒ?" Jumeirah, Al Khail Gate, DIP (21 branches)",
+    "priceFrom": 3660,
+    "rating": 4.3,
+    "reviews": "950+",
+    "tags": [
+      "Car",
+      "Motorcycle",
+      "Bus"
+    ],
+    "color": "#7A5230",
+    "status": "live",
+    "website": "https://www.dubaidrivingcenter.net",
+    "phone": "+971 4 345 5855",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  },
+  {
+    "_id": "f87bbb56-dd10-498f-8f5d-8bc4d45c7b83",
+    "name": "Excellence Driving School",
+    "code": "Ex",
+    "emirate": "Dubai",
+    "location": "Dubai ƒ?" Al Qusais, Al Barsha (22 branches)",
+    "priceFrom": 3077,
+    "rating": 4.5,
+    "reviews": "1,200+",
+    "tags": [
+      "Car"
+    ],
+    "color": "#9B6E38",
+    "status": "live",
+    "website": "https://excellenceds.ae",
+    "phone": "+971 600 515 154",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  },
+  {
+    "_id": "794c1e15-503e-4e68-ad78-d8742eec92a3",
+    "name": "Al Ahli Driving Center",
+    "code": "AA",
+    "emirate": "Dubai",
+    "location": "Dubai ƒ?" Al Quoz, Al Nahda (10+ branches)",
+    "priceFrom": 3100,
+    "rating": 4.4,
+    "reviews": "1,400+",
+    "tags": [
+      "Car",
+      "Motorcycle",
+      "Bus"
+    ],
+    "color": "#5A4020",
+    "status": "live",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  },
+  {
+    "_id": "c18b49ee-00f6-48c7-be0f-72d9d5609b99",
+    "name": "Abu Dhabi Driving Center",
+    "code": "A",
+    "emirate": "Abu Dhabi",
+    "location": "Abu Dhabi ƒ?" Main branch & 5 centres",
+    "priceFrom": 4000,
+    "rating": 4.4,
+    "reviews": "1,200+",
+    "tags": [
+      "Car",
+      "Heavy Truck",
+      "Bus"
+    ],
+    "color": "#5A4020",
+    "status": "live",
+    "featured": true,
+    "website": "https://www.addc.ae",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  },
+  {
+    "_id": "2508ff86-8a6b-4f80-8669-50edb7b981e0",
+    "name": "Emirates Driving Company",
+    "code": "ED",
+    "emirate": "Abu Dhabi",
+    "location": "Abu Dhabi ƒ?" Musaffah & Khalifa City",
+    "priceFrom": 3800,
+    "rating": 4.3,
+    "reviews": "800+",
+    "tags": [
+      "Car",
+      "Motorcycle"
+    ],
+    "color": "#7A5230",
+    "status": "live",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  },
+  {
+    "_id": "1afdbcbb-185c-49cd-9a05-e4ecbc6492cf",
+    "name": "Sharjah Driving Institute",
+    "code": "SD",
+    "emirate": "Sharjah",
+    "location": "Sharjah ƒ?" Main campus",
+    "priceFrom": 3500,
+    "rating": 4.2,
+    "reviews": "600+",
+    "tags": [
+      "Car",
+      "Motorcycle",
+      "Truck"
+    ],
+    "color": "#9B6E38",
+    "status": "live",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  },
+  {
+    "_id": "8301e266-a8ca-4da8-838e-65eccf504c0e",
+    "name": "Ajman Driving Center",
+    "code": "AJ",
+    "emirate": "Ajman",
+    "location": "Ajman ƒ?" Central",
+    "priceFrom": 3200,
+    "rating": 4.1,
+    "reviews": "400+",
+    "tags": [
+      "Car",
+      "Motorcycle"
+    ],
+    "color": "#B8844A",
+    "status": "live",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  },
+  {
+    "_id": "e0a28f5f-7c0a-4796-8ce9-c838b829a892",
+    "name": "RAK Driving School",
+    "code": "RK",
+    "emirate": "Ras Al Khaimah",
+    "location": "Ras Al Khaimah ƒ?" City centre",
+    "priceFrom": 3000,
+    "rating": 4,
+    "reviews": "300+",
+    "tags": [
+      "Car"
+    ],
+    "color": "#C4673A",
+    "status": "live",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  },
+  {
+    "_id": "fffd7f11-ad72-4c1c-a298-13d8f5d913c2",
+    "name": "Fujairah Driving School",
+    "code": "FJ",
+    "emirate": "Fujairah",
+    "location": "Fujairah ƒ?" Corniche",
+    "priceFrom": 2900,
+    "rating": 4,
+    "reviews": "250+",
+    "tags": [
+      "Car",
+      "Motorcycle"
+    ],
+    "color": "#4A3728",
+    "status": "live",
+    "createdAt": "2026-05-15T09:37:47.729Z",
+    "updatedAt": "2026-05-15T09:37:47.729Z"
+  }
+]
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\lib\auth.js =====
+const jwt = require('jsonwebtoken');
+
+/**
+ * Verifies the Bearer token from a Next.js Request and returns the decoded payload.
+ * Returns null if missing or invalid.
+ */
+function verifyToken(request) {
+  const header = request.headers.get('authorization') || '';
+  const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_change_me');
+    if (!decoded.isAdmin) return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Returns a 401 Response if the request is not authenticated, null otherwise.
+ * Usage: const authErr = requireAdmin(request); if (authErr) return authErr;
+ */
+function requireAdmin(request) {
+  const admin = verifyToken(request);
+  if (!admin) {
+    return Response.json(
+      { success: false, message: 'No token provided or invalid token' },
+      { status: 401 }
+    );
+  }
+  return null; // authenticated
+}
+
+module.exports = { verifyToken, requireAdmin };
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\lib\jsondb.js =====
+// ================================================================
+//  SimpleUAE ƒ?" JSON File Database Engine
+//  Replaces MongoDB/Mongoose with flat JSON files.
+//  Each "collection" is a single JSON file in /data/
+// ================================================================
+
+const fs   = require('fs');
+const path = require('path');
+
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+
+function filePath(name) {
+  return path.join(DATA_DIR, `${name}.json`);
+}
+
+function readAll(name) {
+  const fp = filePath(name);
+  if (!fs.existsSync(fp)) return [];
+  try {
+    return JSON.parse(fs.readFileSync(fp, 'utf8'));
+  } catch {
+    return [];
+  }
+}
+
+function writeAll(name, data) {
+  fs.writeFileSync(filePath(name), JSON.stringify(data, null, 2), 'utf8');
+}
+
+function matchesFilter(doc, filter) {
+  for (const [key, val] of Object.entries(filter)) {
+    if (key === '$or') {
+      if (!val.some(sub => matchesFilter(doc, sub))) return false;
+      continue;
+    }
+    if (key === '$and') {
+      if (!val.every(sub => matchesFilter(doc, sub))) return false;
+      continue;
+    }
+    if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+      if ('$in' in val) {
+        const docVal = doc[key];
+        const arr = val.$in;
+        if (Array.isArray(docVal)) {
+          if (!docVal.some(v => arr.includes(v))) return false;
+        } else {
+          if (!arr.includes(docVal)) return false;
+        }
+        continue;
+      }
+      if ('$gte' in val && doc[key] < val.$gte) return false;
+      if ('$lte' in val && doc[key] > val.$lte) return false;
+      if ('$gt'  in val && doc[key] <= val.$gt) return false;
+      if ('$lt'  in val && doc[key] >= val.$lt) return false;
+      if ('$ne'  in val && doc[key] === val.$ne) return false;
+      if ('$regex' in val) {
+        const flags = val.$options || '';
+        if (!new RegExp(val.$regex, flags).test(doc[key] || '')) return false;
+      }
+      if ('$exists' in val) {
+        const has = key in doc;
+        if (val.$exists && !has) return false;
+        if (!val.$exists && has) return false;
+      }
+      continue;
+    }
+    if (Array.isArray(doc[key])) {
+      if (!doc[key].includes(val)) return false;
+    } else if (doc[key] !== val) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function applyUpdate(doc, update) {
+  if ('$inc' in update) {
+    for (const [k, v] of Object.entries(update.$inc)) {
+      doc[k] = (doc[k] || 0) + v;
+    }
+  }
+  if ('$set' in update) {
+    Object.assign(doc, update.$set);
+  }
+  if ('$push' in update) {
+    for (const [k, v] of Object.entries(update.$push)) {
+      if (!Array.isArray(doc[k])) doc[k] = [];
+      doc[k].push(v);
+    }
+  }
+  const hasOperator = ['$inc','$set','$push','$unset','$addToSet'].some(op => op in update);
+  if (!hasOperator) {
+    Object.assign(doc, update);
+  }
+  doc.updatedAt = new Date().toISOString();
+  return doc;
+}
+
+function sortDocs(docs, sortObj) {
+  if (!sortObj || Object.keys(sortObj).length === 0) return docs;
+  const [[key, dir]] = Object.entries(sortObj);
+  return [...docs].sort((a, b) => {
+    const av = a[key], bv = b[key];
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return dir === 1 || dir === 'asc'
+      ? av > bv ? 1 : av < bv ? -1 : 0
+      : av < bv ? 1 : av > bv ? -1 : 0;
+  });
+}
+
+class Collection {
+  constructor(name) {
+    this.name = name;
+  }
+
+  find(filter = {}) {
+    let docs = readAll(this.name).filter(d => matchesFilter(d, filter));
+    return this._chain(docs);
+  }
+
+  _chain(docs) {
+    return {
+      sort:  (s) => this._chain(sortDocs(docs, s)),
+      skip:  (n) => this._chain(docs.slice(n)),
+      limit: (n) => this._chain(docs.slice(0, n)),
+      lean:  ()  => Promise.resolve(docs),
+      populate: () => ({ lean: () => Promise.resolve(docs), then: (fn) => Promise.resolve(docs).then(fn) }),
+      then: (fn) => Promise.resolve(docs).then(fn),
+    };
+  }
+
+  async findOne(filter = {}) {
+    const docs = readAll(this.name);
+    return docs.find(d => matchesFilter(d, filter)) || null;
+  }
+
+  async findById(id) {
+    return this.findOne({ _id: id });
+  }
+
+  async countDocuments(filter = {}) {
+    const docs = readAll(this.name);
+    if (!filter || Object.keys(filter).length === 0) return docs.length;
+    return docs.filter(d => matchesFilter(d, filter)).length;
+  }
+
+  async create(data) {
+    const docs = readAll(this.name);
+    const now  = new Date().toISOString();
+    const doc  = { _id: crypto.randomUUID(), ...data, createdAt: now, updatedAt: now };
+    docs.push(doc);
+    writeAll(this.name, docs);
+    return doc;
+  }
+
+  async insertMany(items) {
+    const docs = readAll(this.name);
+    const now  = new Date().toISOString();
+    const newDocs = items.map(item => ({ _id: crypto.randomUUID(), ...item, createdAt: now, updatedAt: now }));
+    writeAll(this.name, [...docs, ...newDocs]);
+    return newDocs;
+  }
+
+  async findOneAndUpdate(filter, update, opts = {}) {
+    const docs = readAll(this.name);
+    let idx = docs.findIndex(d => matchesFilter(d, filter));
+    let doc;
+    if (idx === -1) {
+      if (opts.upsert) {
+        const now = new Date().toISOString();
+        const filterFlat = {};
+        for (const [k, v] of Object.entries(filter)) {
+          if (typeof v !== 'object') filterFlat[k] = v;
+        }
+        doc = { _id: crypto.randomUUID(), ...filterFlat, createdAt: now };
+        applyUpdate(doc, update);
+        docs.push(doc);
+      } else {
+        return null;
+      }
+    } else {
+      doc = { ...docs[idx] };
+      applyUpdate(doc, update);
+      docs[idx] = doc;
+    }
+    writeAll(this.name, docs);
+    return opts.new !== false ? doc : docs[idx];
+  }
+
+  async findByIdAndUpdate(id, update, opts = {}) {
+    return this.findOneAndUpdate({ _id: id }, update, opts);
+  }
+
+  async findByIdAndDelete(id) {
+    const docs = readAll(this.name);
+    const idx  = docs.findIndex(d => d._id === id);
+    if (idx === -1) return null;
+    const [removed] = docs.splice(idx, 1);
+    writeAll(this.name, docs);
+    return removed;
+  }
+
+  async deleteMany(filter = {}) {
+    const docs = readAll(this.name);
+    const remaining = Object.keys(filter).length === 0
+      ? []
+      : docs.filter(d => !matchesFilter(d, filter));
+    const count = docs.length - remaining.length;
+    writeAll(this.name, remaining);
+    return { deletedCount: count };
+  }
+
+  async aggregate(pipeline) {
+    let docs = readAll(this.name);
+    for (const stage of pipeline) {
+      if ('$match' in stage) {
+        docs = docs.filter(d => matchesFilter(d, stage.$match));
+      } else if ('$unwind' in stage) {
+        const field = stage.$unwind.replace('$', '');
+        const expanded = [];
+        docs.forEach(d => {
+          const arr = d[field];
+          if (Array.isArray(arr)) {
+            arr.forEach(v => expanded.push({ ...d, [field]: v }));
+          } else {
+            expanded.push(d);
+          }
+        });
+        docs = expanded;
+      } else if ('$group' in stage) {
+        const { _id: idExpr, ...accumulators } = stage.$group;
+        const groups = {};
+        docs.forEach(d => {
+          const key = idExpr ? (idExpr.startsWith('$') ? d[idExpr.slice(1)] : idExpr) : null;
+          const gkey = String(key);
+          if (!groups[gkey]) groups[gkey] = { _id: key };
+          for (const [outField, acc] of Object.entries(accumulators)) {
+            if ('$sum' in acc) {
+              const val = acc.$sum === 1 ? 1 : (typeof acc.$sum === 'string' ? d[acc.$sum.slice(1)] : acc.$sum);
+              groups[gkey][outField] = (groups[gkey][outField] || 0) + (val || 0);
+            }
+          }
+        });
+        docs = Object.values(groups);
+      } else if ('$sort' in stage) {
+        docs = sortDocs(docs, stage.$sort);
+      } else if ('$limit' in stage) {
+        docs = docs.slice(0, stage.$limit);
+      }
+    }
+    return docs;
+  }
+}
+
+const registry = {};
+function model(name) {
+  if (!registry[name]) registry[name] = new Collection(name.toLowerCase() + 's');
+  return registry[name];
+}
+
+module.exports = { model, Collection, readAll, writeAll };
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\lib\logger.js =====
+const { model } = require('./jsondb');
+const Log = model('Log');
+
+exports.log = async (type, action, message, meta = {}) => {
+  try {
+    await Log.create({ type, action, message, meta });
+  } catch (e) {
+    console.error('Logger error:', e.message);
+  }
+};
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\lib\mailer.js =====
+// ================================================================
+//  Mailer Service ƒ?" nodemailer wrapper (optional)
+//  If SMTP_HOST is not set, emails are silently skipped.
+// ================================================================
+const nodemailer = require('nodemailer');
+
+let transporter = null;
+
+function getTransporter() {
+  if (transporter) return transporter;
+  if (!process.env.SMTP_HOST) return null;
+  transporter = nodemailer.createTransport({
+    host:   process.env.SMTP_HOST,
+    port:   parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+  return transporter;
+}
+
+exports.sendLeadConfirmation = async (lead) => {
+  const t = getTransporter();
+  if (!t) return;
+  await t.sendMail({
+    from:    process.env.EMAIL_FROM || 'SimpleUAE <noreply@simpleuae.com>',
+    to:      lead.email,
+    subject: 'Your SimpleUAE Comparison Request',
+    html: `<p>Hi ${lead.fullName},</p>
+           <p>Thank you for submitting your request. We'll send personalised school recommendations shortly.</p>
+           <p>License type: <strong>${lead.licenseType}</strong></p>
+           <p>Emirates: <strong>${(lead.emirates||[]).join(', ') || 'ƒ?"'}</strong></p>
+           <p>The SimpleUAE Team</p>`,
+  });
+};
+
+exports.sendAdminLeadAlert = async (lead) => {
+  const t = getTransporter();
+  if (!t) return;
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@simpleuae.com';
+  await t.sendMail({
+    from:    process.env.EMAIL_FROM || 'SimpleUAE <noreply@simpleuae.com>',
+    to:      adminEmail,
+    subject: `New Lead: ${lead.fullName} ƒ?" ${lead.licenseType}`,
+    html: `<p>New comparison request received.</p>
+           <ul>
+             <li>Name: ${lead.fullName}</li>
+             <li>Email: ${lead.email}</li>
+             <li>Phone: ${lead.phone}</li>
+             <li>License: ${lead.licenseType}</li>
+             <li>Emirates: ${(lead.emirates||[]).join(', ') || 'ƒ?"'}</li>
+           </ul>`,
+  });
+};
+
+exports.sendWeeklyReport = async () => {
+  const t = getTransporter();
+  if (!t) return;
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@simpleuae.com';
+  await t.sendMail({
+    from:    process.env.EMAIL_FROM || 'SimpleUAE <noreply@simpleuae.com>',
+    to:      adminEmail,
+    subject: 'SimpleUAE Weekly Report',
+    html:    '<p>Weekly summary ƒ?" check your admin panel for details.</p>',
+  });
+};
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\lib\seed.js =====
+const { model } = require('./jsondb');
+const School = model('School');
+
+exports.seedSchools = async () => {
+  const schools = [
+    // ƒ"?ƒ"? DUBAI ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?
+    { name:'Emirates Driving Institute', code:'E', emirate:'Dubai', location:'Dubai ƒ?" Al Quoz, Al Qusais, Jumeirah (53 branches)', priceFrom:3765, rating:4.7, reviews:'2,400+', tags:['Car','Motorcycle','Bus','Truck'], color:'#B8844A', status:'live', featured:true, website:'https://edi-uae.com', phone:'+971 4 263 1100', email:'info@edi-uae.com' },
+    { name:'Galadari Motor Driving Centre', code:'G', emirate:'Dubai', location:'Dubai ƒ?" Al Qusais, Al Quoz, Dubai Mall (60+ branches)', priceFrom:3880, rating:4.4, reviews:'1,800+', tags:['Car','Truck','Forklift'], color:'#C4673A', status:'live', website:'https://www.gmdc.ae', phone:'+971 4 267 6166', email:'info@gmdc.ae' },
+    { name:'Belhasa Driving Center', code:'B', emirate:'Dubai', location:'Dubai ƒ?" Al Wasl, Al Quoz, Jebel Ali, Marina (15+ branches)', priceFrom:3675, rating:4.6, reviews:'3,100+', tags:['Car','Motorcycle','VIP','Heavy'], color:'#4A3728', status:'live', featured:true, website:'https://www.bdc.ae', phone:'+971 4 509 1200', email:'info@bdc.ae' },
+    { name:'Dubai Driving Center', code:'D', emirate:'Dubai', location:'Dubai ƒ?" Jumeirah, Al Khail Gate, DIP (21 branches)', priceFrom:3660, rating:4.3, reviews:'950+', tags:['Car','Motorcycle','Bus'], color:'#7A5230', status:'live', website:'https://www.dubaidrivingcenter.net', phone:'+971 4 345 5855' },
+    { name:'Excellence Driving School', code:'Ex', emirate:'Dubai', location:'Dubai ƒ?" Al Qusais, Al Barsha (22 branches)', priceFrom:3077, rating:4.5, reviews:'1,200+', tags:['Car'], color:'#9B6E38', status:'live', website:'https://excellenceds.ae', phone:'+971 600 515 154' },
+    { name:'Al Ahli Driving Center', code:'AA', emirate:'Dubai', location:'Dubai ƒ?" Al Quoz, Al Nahda (10+ branches)', priceFrom:3100, rating:4.4, reviews:'1,400+', tags:['Car','Motorcycle','Bus'], color:'#5A4020', status:'live' },
+    // ƒ"?ƒ"? ABU DHABI ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?
+    { name:'Abu Dhabi Driving Center', code:'A', emirate:'Abu Dhabi', location:'Abu Dhabi ƒ?" Main branch & 5 centres', priceFrom:4000, rating:4.4, reviews:'1,200+', tags:['Car','Heavy Truck','Bus'], color:'#5A4020', status:'live', featured:true, website:'https://www.addc.ae' },
+    { name:'Emirates Driving Company', code:'ED', emirate:'Abu Dhabi', location:'Abu Dhabi ƒ?" Musaffah & Khalifa City', priceFrom:3800, rating:4.3, reviews:'800+', tags:['Car','Motorcycle'], color:'#7A5230', status:'live' },
+    // ƒ"?ƒ"? SHARJAH ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?
+    { name:'Sharjah Driving Institute', code:'SD', emirate:'Sharjah', location:'Sharjah ƒ?" Main campus', priceFrom:3500, rating:4.2, reviews:'600+', tags:['Car','Motorcycle','Truck'], color:'#9B6E38', status:'live' },
+    // ƒ"?ƒ"? AJMAN ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?
+    { name:'Ajman Driving Center', code:'AJ', emirate:'Ajman', location:'Ajman ƒ?" Central', priceFrom:3200, rating:4.1, reviews:'400+', tags:['Car','Motorcycle'], color:'#B8844A', status:'live' },
+    // ƒ"?ƒ"? RAS AL KHAIMAH ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?
+    { name:'RAK Driving School', code:'RK', emirate:'Ras Al Khaimah', location:'Ras Al Khaimah ƒ?" City centre', priceFrom:3000, rating:4.0, reviews:'300+', tags:['Car'], color:'#C4673A', status:'live' },
+    // ƒ"?ƒ"? FUJAIRAH ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?ƒ"?
+    { name:'Fujairah Driving School', code:'FJ', emirate:'Fujairah', location:'Fujairah ƒ?" Corniche', priceFrom:2900, rating:4.0, reviews:'250+', tags:['Car','Motorcycle'], color:'#4A3728', status:'live' },
+  ];
+  await School.insertMany(schools);
+};
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\jsconfig.json =====
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"]
+    }
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\next.config.js =====
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Allow server-side require() of Node built-ins in route handlers
+  serverExternalPackages: ['bcryptjs', 'jsonwebtoken', 'nodemailer'],
+};
+
+module.exports = nextConfig;
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\next.config.mjs =====
+// next.config.js is the active config ƒ?" this file is intentionally minimal
+// (Next.js 15+ may pick .mjs; keeping it in sync)
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  serverExternalPackages: ['bcryptjs', 'jsonwebtoken', 'nodemailer'],
+};
+
+export default nextConfig;
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\package-lock.json =====
+{
+  "name": "simpleuae-nextjs",
+  "version": "0.1.0",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "simpleuae-nextjs",
+      "version": "0.1.0",
+      "dependencies": {
+        "bcryptjs": "^3.0.3",
+        "express-rate-limit": "^8.5.1",
+        "jsonwebtoken": "^9.0.3",
+        "next": "16.2.6",
+        "nodemailer": "^8.0.7",
+        "react": "19.2.4",
+        "react-dom": "19.2.4",
+        "uuid": "^14.0.0"
+      }
+    },
+    "node_modules/@emnapi/runtime": {
+      "version": "1.10.0",
+      "resolved": "https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.10.0.tgz",
+      "integrity": "sha512-ewvYlk86xUoGI0zQRNq/mC+16R1QeDlKQy21Ki3oSYXNgLb45GV1P6A0M+/s6nyCuNDqe5VpaY84BzXGwVbwFA==",
+      "license": "MIT",
+      "optional": true,
+      "dependencies": {
+        "tslib": "^2.4.0"
+      }
+    },
+    "node_modules/@img/colour": {
+      "version": "1.1.0",
+      "resolved": "https://registry.npmjs.org/@img/colour/-/colour-1.1.0.tgz",
+      "integrity": "sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==",
+      "license": "MIT",
+      "optional": true,
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/@img/sharp-darwin-arm64": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-darwin-arm64/-/sharp-darwin-arm64-0.34.5.tgz",
+      "integrity": "sha512-imtQ3WMJXbMY4fxb/Ndp6HBTNVtWCUI0WdobyheGf5+ad6xX8VIDO8u2xE4qc/fr08CKG/7dDseFtn6M6g/r3w==",
+      "cpu": [
+        "arm64"
+      ],
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      },
+      "optionalDependencies": {
+        "@img/sharp-libvips-darwin-arm64": "1.2.4"
+      }
+    },
+    "node_modules/@img/sharp-darwin-x64": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-darwin-x64/-/sharp-darwin-x64-0.34.5.tgz",
+      "integrity": "sha512-YNEFAF/4KQ/PeW0N+r+aVVsoIY0/qxxikF2SWdp+NRkmMB7y9LBZAVqQ4yhGCm/H3H270OSykqmQMKLBhBJDEw==",
+      "cpu": [
+        "x64"
+      ],
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      },
+      "optionalDependencies": {
+        "@img/sharp-libvips-darwin-x64": "1.2.4"
+      }
+    },
+    "node_modules/@img/sharp-libvips-darwin-arm64": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-darwin-arm64/-/sharp-libvips-darwin-arm64-1.2.4.tgz",
+      "integrity": "sha512-zqjjo7RatFfFoP0MkQ51jfuFZBnVE2pRiaydKJ1G/rHZvnsrHAOcQALIi9sA5co5xenQdTugCvtb1cuf78Vf4g==",
+      "cpu": [
+        "arm64"
+      ],
+      "license": "LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-libvips-darwin-x64": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-darwin-x64/-/sharp-libvips-darwin-x64-1.2.4.tgz",
+      "integrity": "sha512-1IOd5xfVhlGwX+zXv2N93k0yMONvUlANylbJw1eTah8K/Jtpi15KC+WSiaX/nBmbm2HxRM1gZ0nSdjSsrZbGKg==",
+      "cpu": [
+        "x64"
+      ],
+      "license": "LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-libvips-linux-arm": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-arm/-/sharp-libvips-linux-arm-1.2.4.tgz",
+      "integrity": "sha512-bFI7xcKFELdiNCVov8e44Ia4u2byA+l3XtsAj+Q8tfCwO6BQ8iDojYdvoPMqsKDkuoOo+X6HZA0s0q11ANMQ8A==",
+      "cpu": [
+        "arm"
+      ],
+      "license": "LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-libvips-linux-arm64": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-arm64/-/sharp-libvips-linux-arm64-1.2.4.tgz",
+      "integrity": "sha512-excjX8DfsIcJ10x1Kzr4RcWe1edC9PquDRRPx3YVCvQv+U5p7Yin2s32ftzikXojb1PIFc/9Mt28/y+iRklkrw==",
+      "cpu": [
+        "arm64"
+      ],
+      "license": "LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-libvips-linux-ppc64": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-ppc64/-/sharp-libvips-linux-ppc64-1.2.4.tgz",
+      "integrity": "sha512-FMuvGijLDYG6lW+b/UvyilUWu5Ayu+3r2d1S8notiGCIyYU/76eig1UfMmkZ7vwgOrzKzlQbFSuQfgm7GYUPpA==",
+      "cpu": [
+        "ppc64"
+      ],
+      "license": "LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-libvips-linux-riscv64": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-riscv64/-/sharp-libvips-linux-riscv64-1.2.4.tgz",
+      "integrity": "sha512-oVDbcR4zUC0ce82teubSm+x6ETixtKZBh/qbREIOcI3cULzDyb18Sr/Wcyx7NRQeQzOiHTNbZFF1UwPS2scyGA==",
+      "cpu": [
+        "riscv64"
+      ],
+      "license": "LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-libvips-linux-s390x": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-s390x/-/sharp-libvips-linux-s390x-1.2.4.tgz",
+      "integrity": "sha512-qmp9VrzgPgMoGZyPvrQHqk02uyjA0/QrTO26Tqk6l4ZV0MPWIW6LTkqOIov+J1yEu7MbFQaDpwdwJKhbJvuRxQ==",
+      "cpu": [
+        "s390x"
+      ],
+      "license": "LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-libvips-linux-x64": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-x64/-/sharp-libvips-linux-x64-1.2.4.tgz",
+      "integrity": "sha512-tJxiiLsmHc9Ax1bz3oaOYBURTXGIRDODBqhveVHonrHJ9/+k89qbLl0bcJns+e4t4rvaNBxaEZsFtSfAdquPrw==",
+      "cpu": [
+        "x64"
+      ],
+      "license": "LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-libvips-linuxmusl-arm64": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-arm64/-/sharp-libvips-linuxmusl-arm64-1.2.4.tgz",
+      "integrity": "sha512-FVQHuwx1IIuNow9QAbYUzJ+En8KcVm9Lk5+uGUQJHaZmMECZmOlix9HnH7n1TRkXMS0pGxIJokIVB9SuqZGGXw==",
+      "cpu": [
+        "arm64"
+      ],
+      "license": "LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-libvips-linuxmusl-x64": {
+      "version": "1.2.4",
+      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-x64/-/sharp-libvips-linuxmusl-x64-1.2.4.tgz",
+      "integrity": "sha512-+LpyBk7L44ZIXwz/VYfglaX/okxezESc6UxDSoyo2Ks6Jxc4Y7sGjpgU9s4PMgqgjj1gZCylTieNamqA1MF7Dg==",
+      "cpu": [
+        "x64"
+      ],
+      "license": "LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-linux-arm": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-linux-arm/-/sharp-linux-arm-0.34.5.tgz",
+      "integrity": "sha512-9dLqsvwtg1uuXBGZKsxem9595+ujv0sJ6Vi8wcTANSFpwV/GONat5eCkzQo/1O6zRIkh0m/8+5BjrRr7jDUSZw==",
+      "cpu": [
+        "arm"
+      ],
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      },
+      "optionalDependencies": {
+        "@img/sharp-libvips-linux-arm": "1.2.4"
+      }
+    },
+    "node_modules/@img/sharp-linux-arm64": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-linux-arm64/-/sharp-linux-arm64-0.34.5.tgz",
+      "integrity": "sha512-bKQzaJRY/bkPOXyKx5EVup7qkaojECG6NLYswgktOZjaXecSAeCWiZwwiFf3/Y+O1HrauiE3FVsGxFg8c24rZg==",
+      "cpu": [
+        "arm64"
+      ],
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      },
+      "optionalDependencies": {
+        "@img/sharp-libvips-linux-arm64": "1.2.4"
+      }
+    },
+    "node_modules/@img/sharp-linux-ppc64": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-linux-ppc64/-/sharp-linux-ppc64-0.34.5.tgz",
+      "integrity": "sha512-7zznwNaqW6YtsfrGGDA6BRkISKAAE1Jo0QdpNYXNMHu2+0dTrPflTLNkpc8l7MUP5M16ZJcUvysVWWrMefZquA==",
+      "cpu": [
+        "ppc64"
+      ],
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      },
+      "optionalDependencies": {
+        "@img/sharp-libvips-linux-ppc64": "1.2.4"
+      }
+    },
+    "node_modules/@img/sharp-linux-riscv64": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-linux-riscv64/-/sharp-linux-riscv64-0.34.5.tgz",
+      "integrity": "sha512-51gJuLPTKa7piYPaVs8GmByo7/U7/7TZOq+cnXJIHZKavIRHAP77e3N2HEl3dgiqdD/w0yUfiJnII77PuDDFdw==",
+      "cpu": [
+        "riscv64"
+      ],
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      },
+      "optionalDependencies": {
+        "@img/sharp-libvips-linux-riscv64": "1.2.4"
+      }
+    },
+    "node_modules/@img/sharp-linux-s390x": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-linux-s390x/-/sharp-linux-s390x-0.34.5.tgz",
+      "integrity": "sha512-nQtCk0PdKfho3eC5MrbQoigJ2gd1CgddUMkabUj+rBevs8tZ2cULOx46E7oyX+04WGfABgIwmMC0VqieTiR4jg==",
+      "cpu": [
+        "s390x"
+      ],
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      },
+      "optionalDependencies": {
+        "@img/sharp-libvips-linux-s390x": "1.2.4"
+      }
+    },
+    "node_modules/@img/sharp-linux-x64": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-linux-x64/-/sharp-linux-x64-0.34.5.tgz",
+      "integrity": "sha512-MEzd8HPKxVxVenwAa+JRPwEC7QFjoPWuS5NZnBt6B3pu7EG2Ge0id1oLHZpPJdn3OQK+BQDiw9zStiHBTJQQQQ==",
+      "cpu": [
+        "x64"
+      ],
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      },
+      "optionalDependencies": {
+        "@img/sharp-libvips-linux-x64": "1.2.4"
+      }
+    },
+    "node_modules/@img/sharp-linuxmusl-arm64": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-linuxmusl-arm64/-/sharp-linuxmusl-arm64-0.34.5.tgz",
+      "integrity": "sha512-fprJR6GtRsMt6Kyfq44IsChVZeGN97gTD331weR1ex1c1rypDEABN6Tm2xa1wE6lYb5DdEnk03NZPqA7Id21yg==",
+      "cpu": [
+        "arm64"
+      ],
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      },
+      "optionalDependencies": {
+        "@img/sharp-libvips-linuxmusl-arm64": "1.2.4"
+      }
+    },
+    "node_modules/@img/sharp-linuxmusl-x64": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-linuxmusl-x64/-/sharp-linuxmusl-x64-0.34.5.tgz",
+      "integrity": "sha512-Jg8wNT1MUzIvhBFxViqrEhWDGzqymo3sV7z7ZsaWbZNDLXRJZoRGrjulp60YYtV4wfY8VIKcWidjojlLcWrd8Q==",
+      "cpu": [
+        "x64"
+      ],
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      },
+      "optionalDependencies": {
+        "@img/sharp-libvips-linuxmusl-x64": "1.2.4"
+      }
+    },
+    "node_modules/@img/sharp-wasm32": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-wasm32/-/sharp-wasm32-0.34.5.tgz",
+      "integrity": "sha512-OdWTEiVkY2PHwqkbBI8frFxQQFekHaSSkUIJkwzclWZe64O1X4UlUjqqqLaPbUpMOQk6FBu/HtlGXNblIs0huw==",
+      "cpu": [
+        "wasm32"
+      ],
+      "license": "Apache-2.0 AND LGPL-3.0-or-later AND MIT",
+      "optional": true,
+      "dependencies": {
+        "@emnapi/runtime": "^1.7.0"
+      },
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-win32-arm64": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-win32-arm64/-/sharp-win32-arm64-0.34.5.tgz",
+      "integrity": "sha512-WQ3AgWCWYSb2yt+IG8mnC6Jdk9Whs7O0gxphblsLvdhSpSTtmu69ZG1Gkb6NuvxsNACwiPV6cNSZNzt0KPsw7g==",
+      "cpu": [
+        "arm64"
+      ],
+      "license": "Apache-2.0 AND LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-win32-ia32": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-win32-ia32/-/sharp-win32-ia32-0.34.5.tgz",
+      "integrity": "sha512-FV9m/7NmeCmSHDD5j4+4pNI8Cp3aW+JvLoXcTUo0IqyjSfAZJ8dIUmijx1qaJsIiU+Hosw6xM5KijAWRJCSgNg==",
+      "cpu": [
+        "ia32"
+      ],
+      "license": "Apache-2.0 AND LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@img/sharp-win32-x64": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/@img/sharp-win32-x64/-/sharp-win32-x64-0.34.5.tgz",
+      "integrity": "sha512-+29YMsqY2/9eFEiW93eqWnuLcWcufowXewwSNIT6UwZdUUCrM3oFjMWH/Z6/TMmb4hlFenmfAVbpWeup2jryCw==",
+      "cpu": [
+        "x64"
+      ],
+      "license": "Apache-2.0 AND LGPL-3.0-or-later",
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      }
+    },
+    "node_modules/@next/env": {
+      "version": "16.2.6",
+      "resolved": "https://registry.npmjs.org/@next/env/-/env-16.2.6.tgz",
+      "integrity": "sha512-gd8HoHN4ufj73WmR3JmVolrpJR47ILK6LouP5xElPglaVxir6e1a7VzvTvDWkOoPXT9rkkTzyCxBu4yeZfZwcw==",
+      "license": "MIT"
+    },
+    "node_modules/@next/swc-darwin-arm64": {
+      "version": "16.2.6",
+      "resolved": "https://registry.npmjs.org/@next/swc-darwin-arm64/-/swc-darwin-arm64-16.2.6.tgz",
+      "integrity": "sha512-ZJGkkcNfYgrrMkqOdZ7zoLa1TOy0qpcMfk/z4Mh/FKUz40gVO+HNQWqmLxf67Z5WB64DRp0dhEbyHfel+6sJUg==",
+      "cpu": [
+        "arm64"
+      ],
+      "license": "MIT",
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "engines": {
+        "node": ">= 10"
+      }
+    },
+    "node_modules/@next/swc-darwin-x64": {
+      "version": "16.2.6",
+      "resolved": "https://registry.npmjs.org/@next/swc-darwin-x64/-/swc-darwin-x64-16.2.6.tgz",
+      "integrity": "sha512-v/YLBHIY132Ced3puBJ7YJKw1lqsCrgcNo2aRJlCEyQrrCeRJlvGlnmxhPxNQI3KE3N1DN5r9TPNPvka3nq5RQ==",
+      "cpu": [
+        "x64"
+      ],
+      "license": "MIT",
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "engines": {
+        "node": ">= 10"
+      }
+    },
+    "node_modules/@next/swc-linux-arm64-gnu": {
+      "version": "16.2.6",
+      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-16.2.6.tgz",
+      "integrity": "sha512-RPOvqlYBbcQjkz9VQQDZ2T2bARIjXZV1KFlt+V2Mr6SW/e4I9fcKsaA0hdyf2FHoTlsV2xnBd5Y912rP/1Ce6w==",
+      "cpu": [
+        "arm64"
+      ],
+      "license": "MIT",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">= 10"
+      }
+    },
+    "node_modules/@next/swc-linux-arm64-musl": {
+      "version": "16.2.6",
+      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-16.2.6.tgz",
+      "integrity": "sha512-URUTu1+dMkxJsPFgm+OeEvq9wf5sujw0EvgYy80TDGHTSLTnIHeqb0Eu8A3sC95IRgjejQL+kC4mw+4yPxiAXA==",
+      "cpu": [
+        "arm64"
+      ],
+      "license": "MIT",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">= 10"
+      }
+    },
+    "node_modules/@next/swc-linux-x64-gnu": {
+      "version": "16.2.6",
+      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-16.2.6.tgz",
+      "integrity": "sha512-DOj182mPV8G3UkrayLoREM5YEYI+Dk5wv7Ox9xl1fFibAELEsFD0lDPfHIeILlutMMfdyhlzYPELG3peuKaurw==",
+      "cpu": [
+        "x64"
+      ],
+      "license": "MIT",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">= 10"
+      }
+    },
+    "node_modules/@next/swc-linux-x64-musl": {
+      "version": "16.2.6",
+      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-16.2.6.tgz",
+      "integrity": "sha512-HKQ5SP/V/ub73UvF7n/zeJlxk2kLmtL7Wzrg4WfmkjmNos5onJ2tKu7yZOPdL18A6Svfn3max29ym+ry7NkK4g==",
+      "cpu": [
+        "x64"
+      ],
+      "license": "MIT",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">= 10"
+      }
+    },
+    "node_modules/@next/swc-win32-arm64-msvc": {
+      "version": "16.2.6",
+      "resolved": "https://registry.npmjs.org/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-16.2.6.tgz",
+      "integrity": "sha512-LZXpTlPyS5v7HhSmnvsLGP3iIYgYOBnc8r8ArlT55sGHV89bR2HlDdBjWQ+PY6SJMmk8TuVGFuxalnP3k/0Dwg==",
+      "cpu": [
+        "arm64"
+      ],
+      "license": "MIT",
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "engines": {
+        "node": ">= 10"
+      }
+    },
+    "node_modules/@next/swc-win32-x64-msvc": {
+      "version": "16.2.6",
+      "resolved": "https://registry.npmjs.org/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-16.2.6.tgz",
+      "integrity": "sha512-F0+4i0h9J6C4eE3EAPWsoCk7UW/dbzOjyzxY0qnDUOYFu6FFmdZ6l97/XdV3/Nz3VYyO7UWjyEJUXkGqcoXfMA==",
+      "cpu": [
+        "x64"
+      ],
+      "license": "MIT",
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "engines": {
+        "node": ">= 10"
+      }
+    },
+    "node_modules/@swc/helpers": {
+      "version": "0.5.15",
+      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.15.tgz",
+      "integrity": "sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==",
+      "license": "Apache-2.0",
+      "dependencies": {
+        "tslib": "^2.8.0"
+      }
+    },
+    "node_modules/accepts": {
+      "version": "2.0.0",
+      "resolved": "https://registry.npmjs.org/accepts/-/accepts-2.0.0.tgz",
+      "integrity": "sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==",
+      "license": "MIT",
+      "dependencies": {
+        "mime-types": "^3.0.0",
+        "negotiator": "^1.0.0"
+      },
+      "engines": {
+        "node": ">= 0.6"
+      }
+    },
+    "node_modules/baseline-browser-mapping": {
+      "version": "2.10.29",
+      "resolved": "https://registry.npmjs.org/baseline-browser-mapping/-/baseline-browser-mapping-2.10.29.tgz",
+      "integrity": "sha512-Asa2krT+XTPZINCS+2QcyS8WTkObE77RwkydwF7h6DmnKqbvlalz93m/dnphUyCa6SWSP51VgtEUf2FN+gelFQ==",
+      "license": "Apache-2.0",
+      "bin": {
+        "baseline-browser-mapping": "dist/cli.cjs"
+      },
+      "engines": {
+        "node": ">=6.0.0"
+      }
+    },
+    "node_modules/bcryptjs": {
+      "version": "3.0.3",
+      "resolved": "https://registry.npmjs.org/bcryptjs/-/bcryptjs-3.0.3.tgz",
+      "integrity": "sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==",
+      "license": "BSD-3-Clause",
+      "bin": {
+        "bcrypt": "bin/bcrypt"
+      }
+    },
+    "node_modules/body-parser": {
+      "version": "2.2.2",
+      "resolved": "https://registry.npmjs.org/body-parser/-/body-parser-2.2.2.tgz",
+      "integrity": "sha512-oP5VkATKlNwcgvxi0vM0p/D3n2C3EReYVX+DNYs5TjZFn/oQt2j+4sVJtSMr18pdRr8wjTcBl6LoV+FUwzPmNA==",
+      "license": "MIT",
+      "dependencies": {
+        "bytes": "^3.1.2",
+        "content-type": "^1.0.5",
+        "debug": "^4.4.3",
+        "http-errors": "^2.0.0",
+        "iconv-lite": "^0.7.0",
+        "on-finished": "^2.4.1",
+        "qs": "^6.14.1",
+        "raw-body": "^3.0.1",
+        "type-is": "^2.0.1"
+      },
+      "engines": {
+        "node": ">=18"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/buffer-equal-constant-time": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/buffer-equal-constant-time/-/buffer-equal-constant-time-1.0.1.tgz",
+      "integrity": "sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==",
+      "license": "BSD-3-Clause"
+    },
+    "node_modules/bytes": {
+      "version": "3.1.2",
+      "resolved": "https://registry.npmjs.org/bytes/-/bytes-3.1.2.tgz",
+      "integrity": "sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.8"
+      }
+    },
+    "node_modules/call-bind-apply-helpers": {
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/call-bind-apply-helpers/-/call-bind-apply-helpers-1.0.2.tgz",
+      "integrity": "sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ==",
+      "license": "MIT",
+      "dependencies": {
+        "es-errors": "^1.3.0",
+        "function-bind": "^1.1.2"
+      },
+      "engines": {
+        "node": ">= 0.4"
+      }
+    },
+    "node_modules/call-bound": {
+      "version": "1.0.4",
+      "resolved": "https://registry.npmjs.org/call-bound/-/call-bound-1.0.4.tgz",
+      "integrity": "sha512-+ys997U96po4Kx/ABpBCqhA9EuxJaQWDQg7295H4hBphv3IZg0boBKuwYpt4YXp6MZ5AmZQnU/tyMTlRpaSejg==",
+      "license": "MIT",
+      "dependencies": {
+        "call-bind-apply-helpers": "^1.0.2",
+        "get-intrinsic": "^1.3.0"
+      },
+      "engines": {
+        "node": ">= 0.4"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/caniuse-lite": {
+      "version": "1.0.30001792",
+      "resolved": "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001792.tgz",
+      "integrity": "sha512-hVLMUZFgR4JJ6ACt1uEESvQN1/dBVqPAKY0hgrV70eN3391K6juAfTjKZLKvOMsx8PxA7gsY1/tLMMTcfFLLpw==",
+      "funding": [
+        {
+          "type": "opencollective",
+          "url": "https://opencollective.com/browserslist"
+        },
+        {
+          "type": "tidelift",
+          "url": "https://tidelift.com/funding/github/npm/caniuse-lite"
+        },
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/ai"
+        }
+      ],
+      "license": "CC-BY-4.0"
+    },
+    "node_modules/client-only": {
+      "version": "0.0.1",
+      "resolved": "https://registry.npmjs.org/client-only/-/client-only-0.0.1.tgz",
+      "integrity": "sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==",
+      "license": "MIT"
+    },
+    "node_modules/content-disposition": {
+      "version": "1.1.0",
+      "resolved": "https://registry.npmjs.org/content-disposition/-/content-disposition-1.1.0.tgz",
+      "integrity": "sha512-5jRCH9Z/+DRP7rkvY83B+yGIGX96OYdJmzngqnw2SBSxqCFPd0w2km3s5iawpGX8krnwSGmF0FW5Nhr0Hfai3g==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=18"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/content-type": {
+      "version": "1.0.5",
+      "resolved": "https://registry.npmjs.org/content-type/-/content-type-1.0.5.tgz",
+      "integrity": "sha512-nTjqfcBFEipKdXCv4YDQWCfmcLZKm81ldF0pAopTvyrFGVbcR6P/VAAd5G7N+0tTr8QqiU0tFadD6FK4NtJwOA==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.6"
+      }
+    },
+    "node_modules/cookie": {
+      "version": "0.7.2",
+      "resolved": "https://registry.npmjs.org/cookie/-/cookie-0.7.2.tgz",
+      "integrity": "sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.6"
+      }
+    },
+    "node_modules/cookie-signature": {
+      "version": "1.2.2",
+      "resolved": "https://registry.npmjs.org/cookie-signature/-/cookie-signature-1.2.2.tgz",
+      "integrity": "sha512-D76uU73ulSXrD1UXF4KE2TMxVVwhsnCgfAyTg9k8P6KGZjlXKrOLe4dJQKI3Bxi5wjesZoFXJWElNWBjPZMbhg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=6.6.0"
+      }
+    },
+    "node_modules/debug": {
+      "version": "4.4.3",
+      "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
+      "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==",
+      "license": "MIT",
+      "dependencies": {
+        "ms": "^2.1.3"
+      },
+      "engines": {
+        "node": ">=6.0"
+      },
+      "peerDependenciesMeta": {
+        "supports-color": {
+          "optional": true
+        }
+      }
+    },
+    "node_modules/depd": {
+      "version": "2.0.0",
+      "resolved": "https://registry.npmjs.org/depd/-/depd-2.0.0.tgz",
+      "integrity": "sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.8"
+      }
+    },
+    "node_modules/detect-libc": {
+      "version": "2.1.2",
+      "resolved": "https://registry.npmjs.org/detect-libc/-/detect-libc-2.1.2.tgz",
+      "integrity": "sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "engines": {
+        "node": ">=8"
+      }
+    },
+    "node_modules/dunder-proto": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/dunder-proto/-/dunder-proto-1.0.1.tgz",
+      "integrity": "sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==",
+      "license": "MIT",
+      "dependencies": {
+        "call-bind-apply-helpers": "^1.0.1",
+        "es-errors": "^1.3.0",
+        "gopd": "^1.2.0"
+      },
+      "engines": {
+        "node": ">= 0.4"
+      }
+    },
+    "node_modules/ecdsa-sig-formatter": {
+      "version": "1.0.11",
+      "resolved": "https://registry.npmjs.org/ecdsa-sig-formatter/-/ecdsa-sig-formatter-1.0.11.tgz",
+      "integrity": "sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==",
+      "license": "Apache-2.0",
+      "dependencies": {
+        "safe-buffer": "^5.0.1"
+      }
+    },
+    "node_modules/ee-first": {
+      "version": "1.1.1",
+      "resolved": "https://registry.npmjs.org/ee-first/-/ee-first-1.1.1.tgz",
+      "integrity": "sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==",
+      "license": "MIT"
+    },
+    "node_modules/encodeurl": {
+      "version": "2.0.0",
+      "resolved": "https://registry.npmjs.org/encodeurl/-/encodeurl-2.0.0.tgz",
+      "integrity": "sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.8"
+      }
+    },
+    "node_modules/es-define-property": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/es-define-property/-/es-define-property-1.0.1.tgz",
+      "integrity": "sha512-e3nRfgfUZ4rNGL232gUgX06QNyyez04KdjFrF+LTRoOXmrOgFKDg4BCdsjW8EnT69eqdYGmRpJwiPVYNrCaW3g==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.4"
+      }
+    },
+    "node_modules/es-errors": {
+      "version": "1.3.0",
+      "resolved": "https://registry.npmjs.org/es-errors/-/es-errors-1.3.0.tgz",
+      "integrity": "sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.4"
+      }
+    },
+    "node_modules/es-object-atoms": {
+      "version": "1.1.1",
+      "resolved": "https://registry.npmjs.org/es-object-atoms/-/es-object-atoms-1.1.1.tgz",
+      "integrity": "sha512-FGgH2h8zKNim9ljj7dankFPcICIK9Cp5bm+c2gQSYePhpaG5+esrLODihIorn+Pe6FGJzWhXQotPv73jTaldXA==",
+      "license": "MIT",
+      "dependencies": {
+        "es-errors": "^1.3.0"
+      },
+      "engines": {
+        "node": ">= 0.4"
+      }
+    },
+    "node_modules/escape-html": {
+      "version": "1.0.3",
+      "resolved": "https://registry.npmjs.org/escape-html/-/escape-html-1.0.3.tgz",
+      "integrity": "sha512-NiSupZ4OeuGwr68lGIeym/ksIZMJodUGOSCZ/FSnTxcrekbvqrgdUxlJOMpijaKZVjAJrWrGs/6Jy8OMuyj9ow==",
+      "license": "MIT"
+    },
+    "node_modules/etag": {
+      "version": "1.8.1",
+      "resolved": "https://registry.npmjs.org/etag/-/etag-1.8.1.tgz",
+      "integrity": "sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.6"
+      }
+    },
+    "node_modules/express": {
+      "version": "5.2.1",
+      "resolved": "https://registry.npmjs.org/express/-/express-5.2.1.tgz",
+      "integrity": "sha512-hIS4idWWai69NezIdRt2xFVofaF4j+6INOpJlVOLDO8zXGpUVEVzIYk12UUi2JzjEzWL3IOAxcTubgz9Po0yXw==",
+      "license": "MIT",
+      "peer": true,
+      "dependencies": {
+        "accepts": "^2.0.0",
+        "body-parser": "^2.2.1",
+        "content-disposition": "^1.0.0",
+        "content-type": "^1.0.5",
+        "cookie": "^0.7.1",
+        "cookie-signature": "^1.2.1",
+        "debug": "^4.4.0",
+        "depd": "^2.0.0",
+        "encodeurl": "^2.0.0",
+        "escape-html": "^1.0.3",
+        "etag": "^1.8.1",
+        "finalhandler": "^2.1.0",
+        "fresh": "^2.0.0",
+        "http-errors": "^2.0.0",
+        "merge-descriptors": "^2.0.0",
+        "mime-types": "^3.0.0",
+        "on-finished": "^2.4.1",
+        "once": "^1.4.0",
+        "parseurl": "^1.3.3",
+        "proxy-addr": "^2.0.7",
+        "qs": "^6.14.0",
+        "range-parser": "^1.2.1",
+        "router": "^2.2.0",
+        "send": "^1.1.0",
+        "serve-static": "^2.2.0",
+        "statuses": "^2.0.1",
+        "type-is": "^2.0.1",
+        "vary": "^1.1.2"
+      },
+      "engines": {
+        "node": ">= 18"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/express-rate-limit": {
+      "version": "8.5.1",
+      "resolved": "https://registry.npmjs.org/express-rate-limit/-/express-rate-limit-8.5.1.tgz",
+      "integrity": "sha512-5O6KYmyJEpuPJV5hNTXKbAHWRqrzyu+OI3vUnSd2kXFubIVpG7ezpgxQy76Zo5GQZtrQBg86hF+CM/NX+cioiQ==",
+      "license": "MIT",
+      "dependencies": {
+        "ip-address": "^10.2.0"
+      },
+      "engines": {
+        "node": ">= 16"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/express-rate-limit"
+      },
+      "peerDependencies": {
+        "express": ">= 4.11"
+      }
+    },
+    "node_modules/finalhandler": {
+      "version": "2.1.1",
+      "resolved": "https://registry.npmjs.org/finalhandler/-/finalhandler-2.1.1.tgz",
+      "integrity": "sha512-S8KoZgRZN+a5rNwqTxlZZePjT/4cnm0ROV70LedRHZ0p8u9fRID0hJUZQpkKLzro8LfmC8sx23bY6tVNxv8pQA==",
+      "license": "MIT",
+      "dependencies": {
+        "debug": "^4.4.0",
+        "encodeurl": "^2.0.0",
+        "escape-html": "^1.0.3",
+        "on-finished": "^2.4.1",
+        "parseurl": "^1.3.3",
+        "statuses": "^2.0.1"
+      },
+      "engines": {
+        "node": ">= 18.0.0"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/forwarded": {
+      "version": "0.2.0",
+      "resolved": "https://registry.npmjs.org/forwarded/-/forwarded-0.2.0.tgz",
+      "integrity": "sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.6"
+      }
+    },
+    "node_modules/fresh": {
+      "version": "2.0.0",
+      "resolved": "https://registry.npmjs.org/fresh/-/fresh-2.0.0.tgz",
+      "integrity": "sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.8"
+      }
+    },
+    "node_modules/function-bind": {
+      "version": "1.1.2",
+      "resolved": "https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz",
+      "integrity": "sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==",
+      "license": "MIT",
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/get-intrinsic": {
+      "version": "1.3.0",
+      "resolved": "https://registry.npmjs.org/get-intrinsic/-/get-intrinsic-1.3.0.tgz",
+      "integrity": "sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==",
+      "license": "MIT",
+      "dependencies": {
+        "call-bind-apply-helpers": "^1.0.2",
+        "es-define-property": "^1.0.1",
+        "es-errors": "^1.3.0",
+        "es-object-atoms": "^1.1.1",
+        "function-bind": "^1.1.2",
+        "get-proto": "^1.0.1",
+        "gopd": "^1.2.0",
+        "has-symbols": "^1.1.0",
+        "hasown": "^2.0.2",
+        "math-intrinsics": "^1.1.0"
+      },
+      "engines": {
+        "node": ">= 0.4"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/get-proto": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/get-proto/-/get-proto-1.0.1.tgz",
+      "integrity": "sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g==",
+      "license": "MIT",
+      "dependencies": {
+        "dunder-proto": "^1.0.1",
+        "es-object-atoms": "^1.0.0"
+      },
+      "engines": {
+        "node": ">= 0.4"
+      }
+    },
+    "node_modules/gopd": {
+      "version": "1.2.0",
+      "resolved": "https://registry.npmjs.org/gopd/-/gopd-1.2.0.tgz",
+      "integrity": "sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.4"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/has-symbols": {
+      "version": "1.1.0",
+      "resolved": "https://registry.npmjs.org/has-symbols/-/has-symbols-1.1.0.tgz",
+      "integrity": "sha512-1cDNdwJ2Jaohmb3sg4OmKaMBwuC48sYni5HUw2DvsC8LjGTLK9h+eb1X6RyuOHe4hT0ULCW68iomhjUoKUqlPQ==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.4"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/hasown": {
+      "version": "2.0.3",
+      "resolved": "https://registry.npmjs.org/hasown/-/hasown-2.0.3.tgz",
+      "integrity": "sha512-ej4AhfhfL2Q2zpMmLo7U1Uv9+PyhIZpgQLGT1F9miIGmiCJIoCgSmczFdrc97mWT4kVY72KA+WnnhJ5pghSvSg==",
+      "license": "MIT",
+      "dependencies": {
+        "function-bind": "^1.1.2"
+      },
+      "engines": {
+        "node": ">= 0.4"
+      }
+    },
+    "node_modules/http-errors": {
+      "version": "2.0.1",
+      "resolved": "https://registry.npmjs.org/http-errors/-/http-errors-2.0.1.tgz",
+      "integrity": "sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==",
+      "license": "MIT",
+      "dependencies": {
+        "depd": "~2.0.0",
+        "inherits": "~2.0.4",
+        "setprototypeof": "~1.2.0",
+        "statuses": "~2.0.2",
+        "toidentifier": "~1.0.1"
+      },
+      "engines": {
+        "node": ">= 0.8"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/iconv-lite": {
+      "version": "0.7.2",
+      "resolved": "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.7.2.tgz",
+      "integrity": "sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==",
+      "license": "MIT",
+      "dependencies": {
+        "safer-buffer": ">= 2.1.2 < 3.0.0"
+      },
+      "engines": {
+        "node": ">=0.10.0"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/inherits": {
+      "version": "2.0.4",
+      "resolved": "https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz",
+      "integrity": "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==",
+      "license": "ISC"
+    },
+    "node_modules/ip-address": {
+      "version": "10.2.0",
+      "resolved": "https://registry.npmjs.org/ip-address/-/ip-address-10.2.0.tgz",
+      "integrity": "sha512-/+S6j4E9AHvW9SWMSEY9Xfy66O5PWvVEJ08O0y5JGyEKQpojb0K0GKpz/v5HJ/G0vi3D2sjGK78119oXZeE0qA==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 12"
+      }
+    },
+    "node_modules/ipaddr.js": {
+      "version": "1.9.1",
+      "resolved": "https://registry.npmjs.org/ipaddr.js/-/ipaddr.js-1.9.1.tgz",
+      "integrity": "sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.10"
+      }
+    },
+    "node_modules/is-promise": {
+      "version": "4.0.0",
+      "resolved": "https://registry.npmjs.org/is-promise/-/is-promise-4.0.0.tgz",
+      "integrity": "sha512-hvpoI6korhJMnej285dSg6nu1+e6uxs7zG3BYAm5byqDsgJNWwxzM6z6iZiAgQR4TJ30JmBTOwqZUw3WlyH3AQ==",
+      "license": "MIT"
+    },
+    "node_modules/jsonwebtoken": {
+      "version": "9.0.3",
+      "resolved": "https://registry.npmjs.org/jsonwebtoken/-/jsonwebtoken-9.0.3.tgz",
+      "integrity": "sha512-MT/xP0CrubFRNLNKvxJ2BYfy53Zkm++5bX9dtuPbqAeQpTVe0MQTFhao8+Cp//EmJp244xt6Drw/GVEGCUj40g==",
+      "license": "MIT",
+      "dependencies": {
+        "jws": "^4.0.1",
+        "lodash.includes": "^4.3.0",
+        "lodash.isboolean": "^3.0.3",
+        "lodash.isinteger": "^4.0.4",
+        "lodash.isnumber": "^3.0.3",
+        "lodash.isplainobject": "^4.0.6",
+        "lodash.isstring": "^4.0.1",
+        "lodash.once": "^4.0.0",
+        "ms": "^2.1.1",
+        "semver": "^7.5.4"
+      },
+      "engines": {
+        "node": ">=12",
+        "npm": ">=6"
+      }
+    },
+    "node_modules/jwa": {
+      "version": "2.0.1",
+      "resolved": "https://registry.npmjs.org/jwa/-/jwa-2.0.1.tgz",
+      "integrity": "sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg==",
+      "license": "MIT",
+      "dependencies": {
+        "buffer-equal-constant-time": "^1.0.1",
+        "ecdsa-sig-formatter": "1.0.11",
+        "safe-buffer": "^5.0.1"
+      }
+    },
+    "node_modules/jws": {
+      "version": "4.0.1",
+      "resolved": "https://registry.npmjs.org/jws/-/jws-4.0.1.tgz",
+      "integrity": "sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA==",
+      "license": "MIT",
+      "dependencies": {
+        "jwa": "^2.0.1",
+        "safe-buffer": "^5.0.1"
+      }
+    },
+    "node_modules/lodash.includes": {
+      "version": "4.3.0",
+      "resolved": "https://registry.npmjs.org/lodash.includes/-/lodash.includes-4.3.0.tgz",
+      "integrity": "sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==",
+      "license": "MIT"
+    },
+    "node_modules/lodash.isboolean": {
+      "version": "3.0.3",
+      "resolved": "https://registry.npmjs.org/lodash.isboolean/-/lodash.isboolean-3.0.3.tgz",
+      "integrity": "sha512-Bz5mupy2SVbPHURB98VAcw+aHh4vRV5IPNhILUCsOzRmsTmSQ17jIuqopAentWoehktxGd9e/hbIXq980/1QJg==",
+      "license": "MIT"
+    },
+    "node_modules/lodash.isinteger": {
+      "version": "4.0.4",
+      "resolved": "https://registry.npmjs.org/lodash.isinteger/-/lodash.isinteger-4.0.4.tgz",
+      "integrity": "sha512-DBwtEWN2caHQ9/imiNeEA5ys1JoRtRfY3d7V9wkqtbycnAmTvRRmbHKDV4a0EYc678/dia0jrte4tjYwVBaZUA==",
+      "license": "MIT"
+    },
+    "node_modules/lodash.isnumber": {
+      "version": "3.0.3",
+      "resolved": "https://registry.npmjs.org/lodash.isnumber/-/lodash.isnumber-3.0.3.tgz",
+      "integrity": "sha512-QYqzpfwO3/CWf3XP+Z+tkQsfaLL/EnUlXWVkIk5FUPc4sBdTehEqZONuyRt2P67PXAk+NXmTBcc97zw9t1FQrw==",
+      "license": "MIT"
+    },
+    "node_modules/lodash.isplainobject": {
+      "version": "4.0.6",
+      "resolved": "https://registry.npmjs.org/lodash.isplainobject/-/lodash.isplainobject-4.0.6.tgz",
+      "integrity": "sha512-oSXzaWypCMHkPC3NvBEaPHf0KsA5mvPrOPgQWDsbg8n7orZ290M0BmC/jgRZ4vcJ6DTAhjrsSYgdsW/F+MFOBA==",
+      "license": "MIT"
+    },
+    "node_modules/lodash.isstring": {
+      "version": "4.0.1",
+      "resolved": "https://registry.npmjs.org/lodash.isstring/-/lodash.isstring-4.0.1.tgz",
+      "integrity": "sha512-0wJxfxH1wgO3GrbuP+dTTk7op+6L41QCXbGINEmD+ny/G/eCqGzxyCsh7159S+mgDDcoarnBw6PC1PS5+wUGgw==",
+      "license": "MIT"
+    },
+    "node_modules/lodash.once": {
+      "version": "4.1.1",
+      "resolved": "https://registry.npmjs.org/lodash.once/-/lodash.once-4.1.1.tgz",
+      "integrity": "sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==",
+      "license": "MIT"
+    },
+    "node_modules/math-intrinsics": {
+      "version": "1.1.0",
+      "resolved": "https://registry.npmjs.org/math-intrinsics/-/math-intrinsics-1.1.0.tgz",
+      "integrity": "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.4"
+      }
+    },
+    "node_modules/media-typer": {
+      "version": "1.1.0",
+      "resolved": "https://registry.npmjs.org/media-typer/-/media-typer-1.1.0.tgz",
+      "integrity": "sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.8"
+      }
+    },
+    "node_modules/merge-descriptors": {
+      "version": "2.0.0",
+      "resolved": "https://registry.npmjs.org/merge-descriptors/-/merge-descriptors-2.0.0.tgz",
+      "integrity": "sha512-Snk314V5ayFLhp3fkUREub6WtjBfPdCPY1Ln8/8munuLuiYhsABgBVWsozAG+MWMbVEvcdcpbi9R7ww22l9Q3g==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=18"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/sindresorhus"
+      }
+    },
+    "node_modules/mime-db": {
+      "version": "1.54.0",
+      "resolved": "https://registry.npmjs.org/mime-db/-/mime-db-1.54.0.tgz",
+      "integrity": "sha512-aU5EJuIN2WDemCcAp2vFBfp/m4EAhWJnUNSSw0ixs7/kXbd6Pg64EmwJkNdFhB8aWt1sH2CTXrLxo/iAGV3oPQ==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.6"
+      }
+    },
+    "node_modules/mime-types": {
+      "version": "3.0.2",
+      "resolved": "https://registry.npmjs.org/mime-types/-/mime-types-3.0.2.tgz",
+      "integrity": "sha512-Lbgzdk0h4juoQ9fCKXW4by0UJqj+nOOrI9MJ1sSj4nI8aI2eo1qmvQEie4VD1glsS250n15LsWsYtCugiStS5A==",
+      "license": "MIT",
+      "dependencies": {
+        "mime-db": "^1.54.0"
+      },
+      "engines": {
+        "node": ">=18"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/ms": {
+      "version": "2.1.3",
+      "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz",
+      "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==",
+      "license": "MIT"
+    },
+    "node_modules/nanoid": {
+      "version": "3.3.12",
+      "resolved": "https://registry.npmjs.org/nanoid/-/nanoid-3.3.12.tgz",
+      "integrity": "sha512-ZB9RH/39qpq5Vu6Y+NmUaFhQR6pp+M2Xt76XBnEwDaGcVAqhlvxrl3B2bKS5D3NH3QR76v3aSrKaF/Kiy7lEtQ==",
+      "funding": [
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/ai"
+        }
+      ],
+      "license": "MIT",
+      "bin": {
+        "nanoid": "bin/nanoid.cjs"
+      },
+      "engines": {
+        "node": "^10 || ^12 || ^13.7 || ^14 || >=15.0.1"
+      }
+    },
+    "node_modules/negotiator": {
+      "version": "1.0.0",
+      "resolved": "https://registry.npmjs.org/negotiator/-/negotiator-1.0.0.tgz",
+      "integrity": "sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.6"
+      }
+    },
+    "node_modules/next": {
+      "version": "16.2.6",
+      "resolved": "https://registry.npmjs.org/next/-/next-16.2.6.tgz",
+      "integrity": "sha512-qOVgKJg1+At15NpeUP+eJgCHvTCgXsogweq87Ri/Ix7PkqQHg4sdaXmSFqKlgaIXE4kW0g25LE68W87UANlHtw==",
+      "license": "MIT",
+      "dependencies": {
+        "@next/env": "16.2.6",
+        "@swc/helpers": "0.5.15",
+        "baseline-browser-mapping": "^2.9.19",
+        "caniuse-lite": "^1.0.30001579",
+        "postcss": "8.4.31",
+        "styled-jsx": "5.1.6"
+      },
+      "bin": {
+        "next": "dist/bin/next"
+      },
+      "engines": {
+        "node": ">=20.9.0"
+      },
+      "optionalDependencies": {
+        "@next/swc-darwin-arm64": "16.2.6",
+        "@next/swc-darwin-x64": "16.2.6",
+        "@next/swc-linux-arm64-gnu": "16.2.6",
+        "@next/swc-linux-arm64-musl": "16.2.6",
+        "@next/swc-linux-x64-gnu": "16.2.6",
+        "@next/swc-linux-x64-musl": "16.2.6",
+        "@next/swc-win32-arm64-msvc": "16.2.6",
+        "@next/swc-win32-x64-msvc": "16.2.6",
+        "sharp": "^0.34.5"
+      },
+      "peerDependencies": {
+        "@opentelemetry/api": "^1.1.0",
+        "@playwright/test": "^1.51.1",
+        "babel-plugin-react-compiler": "*",
+        "react": "^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0",
+        "react-dom": "^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0",
+        "sass": "^1.3.0"
+      },
+      "peerDependenciesMeta": {
+        "@opentelemetry/api": {
+          "optional": true
+        },
+        "@playwright/test": {
+          "optional": true
+        },
+        "babel-plugin-react-compiler": {
+          "optional": true
+        },
+        "sass": {
+          "optional": true
+        }
+      }
+    },
+    "node_modules/nodemailer": {
+      "version": "8.0.7",
+      "resolved": "https://registry.npmjs.org/nodemailer/-/nodemailer-8.0.7.tgz",
+      "integrity": "sha512-pkjE4mkBzQjdJT4/UmlKl3pX0rC9fZmjh7c6C9o7lv66Ac6w9WCnzPzhbPNxwZAzlF4mdq4CSWB5+FbK6FWCow==",
+      "license": "MIT-0",
+      "engines": {
+        "node": ">=6.0.0"
+      }
+    },
+    "node_modules/object-inspect": {
+      "version": "1.13.4",
+      "resolved": "https://registry.npmjs.org/object-inspect/-/object-inspect-1.13.4.tgz",
+      "integrity": "sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.4"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/on-finished": {
+      "version": "2.4.1",
+      "resolved": "https://registry.npmjs.org/on-finished/-/on-finished-2.4.1.tgz",
+      "integrity": "sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg==",
+      "license": "MIT",
+      "dependencies": {
+        "ee-first": "1.1.1"
+      },
+      "engines": {
+        "node": ">= 0.8"
+      }
+    },
+    "node_modules/once": {
+      "version": "1.4.0",
+      "resolved": "https://registry.npmjs.org/once/-/once-1.4.0.tgz",
+      "integrity": "sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==",
+      "license": "ISC",
+      "dependencies": {
+        "wrappy": "1"
+      }
+    },
+    "node_modules/parseurl": {
+      "version": "1.3.3",
+      "resolved": "https://registry.npmjs.org/parseurl/-/parseurl-1.3.3.tgz",
+      "integrity": "sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.8"
+      }
+    },
+    "node_modules/path-to-regexp": {
+      "version": "8.4.2",
+      "resolved": "https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-8.4.2.tgz",
+      "integrity": "sha512-qRcuIdP69NPm4qbACK+aDogI5CBDMi1jKe0ry5rSQJz8JVLsC7jV8XpiJjGRLLol3N+R5ihGYcrPLTno6pAdBA==",
+      "license": "MIT",
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/picocolors": {
+      "version": "1.1.1",
+      "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
+      "integrity": "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==",
+      "license": "ISC"
+    },
+    "node_modules/postcss": {
+      "version": "8.4.31",
+      "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.4.31.tgz",
+      "integrity": "sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==",
+      "funding": [
+        {
+          "type": "opencollective",
+          "url": "https://opencollective.com/postcss/"
+        },
+        {
+          "type": "tidelift",
+          "url": "https://tidelift.com/funding/github/npm/postcss"
+        },
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/ai"
+        }
+      ],
+      "license": "MIT",
+      "dependencies": {
+        "nanoid": "^3.3.6",
+        "picocolors": "^1.0.0",
+        "source-map-js": "^1.0.2"
+      },
+      "engines": {
+        "node": "^10 || ^12 || >=14"
+      }
+    },
+    "node_modules/proxy-addr": {
+      "version": "2.0.7",
+      "resolved": "https://registry.npmjs.org/proxy-addr/-/proxy-addr-2.0.7.tgz",
+      "integrity": "sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==",
+      "license": "MIT",
+      "dependencies": {
+        "forwarded": "0.2.0",
+        "ipaddr.js": "1.9.1"
+      },
+      "engines": {
+        "node": ">= 0.10"
+      }
+    },
+    "node_modules/qs": {
+      "version": "6.15.1",
+      "resolved": "https://registry.npmjs.org/qs/-/qs-6.15.1.tgz",
+      "integrity": "sha512-6YHEFRL9mfgcAvql/XhwTvf5jKcOiiupt2FiJxHkiX1z4j7WL8J/jRHYLluORvc1XxB5rV20KoeK00gVJamspg==",
+      "license": "BSD-3-Clause",
+      "dependencies": {
+        "side-channel": "^1.1.0"
+      },
+      "engines": {
+        "node": ">=0.6"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/range-parser": {
+      "version": "1.2.1",
+      "resolved": "https://registry.npmjs.org/range-parser/-/range-parser-1.2.1.tgz",
+      "integrity": "sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.6"
+      }
+    },
+    "node_modules/raw-body": {
+      "version": "3.0.2",
+      "resolved": "https://registry.npmjs.org/raw-body/-/raw-body-3.0.2.tgz",
+      "integrity": "sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==",
+      "license": "MIT",
+      "dependencies": {
+        "bytes": "~3.1.2",
+        "http-errors": "~2.0.1",
+        "iconv-lite": "~0.7.0",
+        "unpipe": "~1.0.0"
+      },
+      "engines": {
+        "node": ">= 0.10"
+      }
+    },
+    "node_modules/react": {
+      "version": "19.2.4",
+      "resolved": "https://registry.npmjs.org/react/-/react-19.2.4.tgz",
+      "integrity": "sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==",
+      "license": "MIT",
+      "peer": true,
+      "engines": {
+        "node": ">=0.10.0"
+      }
+    },
+    "node_modules/react-dom": {
+      "version": "19.2.4",
+      "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.2.4.tgz",
+      "integrity": "sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==",
+      "license": "MIT",
+      "peer": true,
+      "dependencies": {
+        "scheduler": "^0.27.0"
+      },
+      "peerDependencies": {
+        "react": "^19.2.4"
+      }
+    },
+    "node_modules/router": {
+      "version": "2.2.0",
+      "resolved": "https://registry.npmjs.org/router/-/router-2.2.0.tgz",
+      "integrity": "sha512-nLTrUKm2UyiL7rlhapu/Zl45FwNgkZGaCpZbIHajDYgwlJCOzLSk+cIPAnsEqV955GjILJnKbdQC1nVPz+gAYQ==",
+      "license": "MIT",
+      "dependencies": {
+        "debug": "^4.4.0",
+        "depd": "^2.0.0",
+        "is-promise": "^4.0.0",
+        "parseurl": "^1.3.3",
+        "path-to-regexp": "^8.0.0"
+      },
+      "engines": {
+        "node": ">= 18"
+      }
+    },
+    "node_modules/safe-buffer": {
+      "version": "5.2.1",
+      "resolved": "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.2.1.tgz",
+      "integrity": "sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==",
+      "funding": [
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/feross"
+        },
+        {
+          "type": "patreon",
+          "url": "https://www.patreon.com/feross"
+        },
+        {
+          "type": "consulting",
+          "url": "https://feross.org/support"
+        }
+      ],
+      "license": "MIT"
+    },
+    "node_modules/safer-buffer": {
+      "version": "2.1.2",
+      "resolved": "https://registry.npmjs.org/safer-buffer/-/safer-buffer-2.1.2.tgz",
+      "integrity": "sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==",
+      "license": "MIT"
+    },
+    "node_modules/scheduler": {
+      "version": "0.27.0",
+      "resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.27.0.tgz",
+      "integrity": "sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==",
+      "license": "MIT"
+    },
+    "node_modules/semver": {
+      "version": "7.8.0",
+      "resolved": "https://registry.npmjs.org/semver/-/semver-7.8.0.tgz",
+      "integrity": "sha512-AcM7dV/5ul4EekoQ29Agm5vri8JNqRyj39o0qpX6vDF2GZrtutZl5RwgD1XnZjiTAfncsJhMI48QQH3sN87YNA==",
+      "license": "ISC",
+      "bin": {
+        "semver": "bin/semver.js"
+      },
+      "engines": {
+        "node": ">=10"
+      }
+    },
+    "node_modules/send": {
+      "version": "1.2.1",
+      "resolved": "https://registry.npmjs.org/send/-/send-1.2.1.tgz",
+      "integrity": "sha512-1gnZf7DFcoIcajTjTwjwuDjzuz4PPcY2StKPlsGAQ1+YH20IRVrBaXSWmdjowTJ6u8Rc01PoYOGHXfP1mYcZNQ==",
+      "license": "MIT",
+      "dependencies": {
+        "debug": "^4.4.3",
+        "encodeurl": "^2.0.0",
+        "escape-html": "^1.0.3",
+        "etag": "^1.8.1",
+        "fresh": "^2.0.0",
+        "http-errors": "^2.0.1",
+        "mime-types": "^3.0.2",
+        "ms": "^2.1.3",
+        "on-finished": "^2.4.1",
+        "range-parser": "^1.2.1",
+        "statuses": "^2.0.2"
+      },
+      "engines": {
+        "node": ">= 18"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/serve-static": {
+      "version": "2.2.1",
+      "resolved": "https://registry.npmjs.org/serve-static/-/serve-static-2.2.1.tgz",
+      "integrity": "sha512-xRXBn0pPqQTVQiC8wyQrKs2MOlX24zQ0POGaj0kultvoOCstBQM5yvOhAVSUwOMjQtTvsPWoNCHfPGwaaQJhTw==",
+      "license": "MIT",
+      "dependencies": {
+        "encodeurl": "^2.0.0",
+        "escape-html": "^1.0.3",
+        "parseurl": "^1.3.3",
+        "send": "^1.2.0"
+      },
+      "engines": {
+        "node": ">= 18"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/setprototypeof": {
+      "version": "1.2.0",
+      "resolved": "https://registry.npmjs.org/setprototypeof/-/setprototypeof-1.2.0.tgz",
+      "integrity": "sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==",
+      "license": "ISC"
+    },
+    "node_modules/sharp": {
+      "version": "0.34.5",
+      "resolved": "https://registry.npmjs.org/sharp/-/sharp-0.34.5.tgz",
+      "integrity": "sha512-Ou9I5Ft9WNcCbXrU9cMgPBcCK8LiwLqcbywW3t4oDV37n1pzpuNLsYiAV8eODnjbtQlSDwZ2cUEeQz4E54Hltg==",
+      "hasInstallScript": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "@img/colour": "^1.0.0",
+        "detect-libc": "^2.1.2",
+        "semver": "^7.7.3"
+      },
+      "engines": {
+        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+      },
+      "funding": {
+        "url": "https://opencollective.com/libvips"
+      },
+      "optionalDependencies": {
+        "@img/sharp-darwin-arm64": "0.34.5",
+        "@img/sharp-darwin-x64": "0.34.5",
+        "@img/sharp-libvips-darwin-arm64": "1.2.4",
+        "@img/sharp-libvips-darwin-x64": "1.2.4",
+        "@img/sharp-libvips-linux-arm": "1.2.4",
+        "@img/sharp-libvips-linux-arm64": "1.2.4",
+        "@img/sharp-libvips-linux-ppc64": "1.2.4",
+        "@img/sharp-libvips-linux-riscv64": "1.2.4",
+        "@img/sharp-libvips-linux-s390x": "1.2.4",
+        "@img/sharp-libvips-linux-x64": "1.2.4",
+        "@img/sharp-libvips-linuxmusl-arm64": "1.2.4",
+        "@img/sharp-libvips-linuxmusl-x64": "1.2.4",
+        "@img/sharp-linux-arm": "0.34.5",
+        "@img/sharp-linux-arm64": "0.34.5",
+        "@img/sharp-linux-ppc64": "0.34.5",
+        "@img/sharp-linux-riscv64": "0.34.5",
+        "@img/sharp-linux-s390x": "0.34.5",
+        "@img/sharp-linux-x64": "0.34.5",
+        "@img/sharp-linuxmusl-arm64": "0.34.5",
+        "@img/sharp-linuxmusl-x64": "0.34.5",
+        "@img/sharp-wasm32": "0.34.5",
+        "@img/sharp-win32-arm64": "0.34.5",
+        "@img/sharp-win32-ia32": "0.34.5",
+        "@img/sharp-win32-x64": "0.34.5"
+      }
+    },
+    "node_modules/side-channel": {
+      "version": "1.1.0",
+      "resolved": "https://registry.npmjs.org/side-channel/-/side-channel-1.1.0.tgz",
+      "integrity": "sha512-ZX99e6tRweoUXqR+VBrslhda51Nh5MTQwou5tnUDgbtyM0dBgmhEDtWGP/xbKn6hqfPRHujUNwz5fy/wbbhnpw==",
+      "license": "MIT",
+      "dependencies": {
+        "es-errors": "^1.3.0",
+        "object-inspect": "^1.13.3",
+        "side-channel-list": "^1.0.0",
+        "side-channel-map": "^1.0.1",
+        "side-channel-weakmap": "^1.0.2"
+      },
+      "engines": {
+        "node": ">= 0.4"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/side-channel-list": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/side-channel-list/-/side-channel-list-1.0.1.tgz",
+      "integrity": "sha512-mjn/0bi/oUURjc5Xl7IaWi/OJJJumuoJFQJfDDyO46+hBWsfaVM65TBHq2eoZBhzl9EchxOijpkbRC8SVBQU0w==",
+      "license": "MIT",
+      "dependencies": {
+        "es-errors": "^1.3.0",
+        "object-inspect": "^1.13.4"
+      },
+      "engines": {
+        "node": ">= 0.4"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/side-channel-map": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/side-channel-map/-/side-channel-map-1.0.1.tgz",
+      "integrity": "sha512-VCjCNfgMsby3tTdo02nbjtM/ewra6jPHmpThenkTYh8pG9ucZ/1P8So4u4FGBek/BjpOVsDCMoLA/iuBKIFXRA==",
+      "license": "MIT",
+      "dependencies": {
+        "call-bound": "^1.0.2",
+        "es-errors": "^1.3.0",
+        "get-intrinsic": "^1.2.5",
+        "object-inspect": "^1.13.3"
+      },
+      "engines": {
+        "node": ">= 0.4"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/side-channel-weakmap": {
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/side-channel-weakmap/-/side-channel-weakmap-1.0.2.tgz",
+      "integrity": "sha512-WPS/HvHQTYnHisLo9McqBHOJk2FkHO/tlpvldyrnem4aeQp4hai3gythswg6p01oSoTl58rcpiFAjF2br2Ak2A==",
+      "license": "MIT",
+      "dependencies": {
+        "call-bound": "^1.0.2",
+        "es-errors": "^1.3.0",
+        "get-intrinsic": "^1.2.5",
+        "object-inspect": "^1.13.3",
+        "side-channel-map": "^1.0.1"
+      },
+      "engines": {
+        "node": ">= 0.4"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    },
+    "node_modules/source-map-js": {
+      "version": "1.2.1",
+      "resolved": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz",
+      "integrity": "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==",
+      "license": "BSD-3-Clause",
+      "engines": {
+        "node": ">=0.10.0"
+      }
+    },
+    "node_modules/statuses": {
+      "version": "2.0.2",
+      "resolved": "https://registry.npmjs.org/statuses/-/statuses-2.0.2.tgz",
+      "integrity": "sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.8"
+      }
+    },
+    "node_modules/styled-jsx": {
+      "version": "5.1.6",
+      "resolved": "https://registry.npmjs.org/styled-jsx/-/styled-jsx-5.1.6.tgz",
+      "integrity": "sha512-qSVyDTeMotdvQYoHWLNGwRFJHC+i+ZvdBRYosOFgC+Wg1vx4frN2/RG/NA7SYqqvKNLf39P2LSRA2pu6n0XYZA==",
+      "license": "MIT",
+      "dependencies": {
+        "client-only": "0.0.1"
+      },
+      "engines": {
+        "node": ">= 12.0.0"
+      },
+      "peerDependencies": {
+        "react": ">= 16.8.0 || 17.x.x || ^18.0.0-0 || ^19.0.0-0"
+      },
+      "peerDependenciesMeta": {
+        "@babel/core": {
+          "optional": true
+        },
+        "babel-plugin-macros": {
+          "optional": true
+        }
+      }
+    },
+    "node_modules/toidentifier": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/toidentifier/-/toidentifier-1.0.1.tgz",
+      "integrity": "sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=0.6"
+      }
+    },
+    "node_modules/tslib": {
+      "version": "2.8.1",
+      "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz",
+      "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
+      "license": "0BSD"
+    },
+    "node_modules/type-is": {
+      "version": "2.1.0",
+      "resolved": "https://registry.npmjs.org/type-is/-/type-is-2.1.0.tgz",
+      "integrity": "sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA==",
+      "license": "MIT",
+      "dependencies": {
+        "content-type": "^2.0.0",
+        "media-typer": "^1.1.0",
+        "mime-types": "^3.0.0"
+      },
+      "engines": {
+        "node": ">= 18"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/type-is/node_modules/content-type": {
+      "version": "2.0.0",
+      "resolved": "https://registry.npmjs.org/content-type/-/content-type-2.0.0.tgz",
+      "integrity": "sha512-j/O/d7GcZCyNl7/hwZAb606rzqkyvaDctLmckbxLzHvFBzTJHuGEdodATcP3yIRoDrLHkIATJuvzbFlp/ki2cQ==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=18"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/unpipe": {
+      "version": "1.0.0",
+      "resolved": "https://registry.npmjs.org/unpipe/-/unpipe-1.0.0.tgz",
+      "integrity": "sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.8"
+      }
+    },
+    "node_modules/uuid": {
+      "version": "14.0.0",
+      "resolved": "https://registry.npmjs.org/uuid/-/uuid-14.0.0.tgz",
+      "integrity": "sha512-Qo+uWgilfSmAhXCMav1uYFynlQO7fMFiMVZsQqZRMIXp0O7rR7qjkj+cPvBHLgBqi960QCoo/PH2/6ZtVqKvrg==",
+      "funding": [
+        "https://github.com/sponsors/broofa",
+        "https://github.com/sponsors/ctavan"
+      ],
+      "license": "MIT",
+      "bin": {
+        "uuid": "dist-node/bin/uuid"
+      }
+    },
+    "node_modules/vary": {
+      "version": "1.1.2",
+      "resolved": "https://registry.npmjs.org/vary/-/vary-1.1.2.tgz",
+      "integrity": "sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.8"
+      }
+    },
+    "node_modules/wrappy": {
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz",
+      "integrity": "sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==",
+      "license": "ISC"
+    }
+  }
+}
+
+===== C:\Users\ALEF\simple-ae\simpleuae-final-v4\simpleuae-nextjs\package.json =====
+{
+  "name": "simpleuae-nextjs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "express-rate-limit": "^8.5.1",
+    "jsonwebtoken": "^9.0.3",
+    "next": "16.2.6",
+    "nodemailer": "^8.0.7",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "uuid": "^14.0.0"
+  }
+}
+
